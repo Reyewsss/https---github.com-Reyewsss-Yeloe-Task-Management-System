@@ -1,0 +1,357 @@
+@model task_management_system.Models.Project
+
+@{
+    ViewData["Title"] = $"{Model.Name} - Dashboard";
+    Layout = "_DashboardLayout";
+    var project = ViewBag.Project as task_management_system.Models.Project;
+    var tasks = ViewBag.ProjectTasks as List<task_management_system.Models.AddTask>;
+}
+
+<link rel="stylesheet" href="~/css/webpages-css/project-dashboard.css" asp-append-version="true" />
+
+<!-- Project Dashboard Header -->
+<div class="dashboard-header">
+    <div class="header-left">
+        <a href="@Url.Action("Index", "Projects")" class="back-link">
+            <i class="fas fa-arrow-left"></i> Back to Projects
+        </a>
+        <h1><i class="fas fa-folder-open"></i> @Model.Name</h1>
+        <p>@Model.Description</p>
+    </div>
+    <div class="header-right">
+        <span class="project-status-badge @Model.Status.ToString().ToLower()">@Model.Status</span>
+        <span class="project-priority-badge @Model.Priority.ToString().ToLower()">@Model.Priority Priority</span>
+    </div>
+</div>
+
+<!-- Statistics Cards -->
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-icon tasks">
+            <i class="fas fa-tasks"></i>
+        </div>
+        <div class="stat-content">
+            <h3>@ViewBag.TotalTasks</h3>
+            <p>Total Tasks</p>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon completed">
+            <i class="fas fa-check-circle"></i>
+        </div>
+        <div class="stat-content">
+            <h3>@ViewBag.CompletedTasks</h3>
+            <p>Completed</p>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon pending">
+            <i class="fas fa-clock"></i>
+        </div>
+        <div class="stat-content">
+            <h3>@ViewBag.PendingTasks</h3>
+            <p>Pending</p>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon priority">
+            <i class="fas fa-exclamation-triangle"></i>
+        </div>
+        <div class="stat-content">
+            <h3>@ViewBag.HighPriorityTasks</h3>
+            <p>High Priority</p>
+        </div>
+    </div>
+</div>
+
+<!-- Tabs Navigation -->
+<div class="tabs-navigation">
+    <button class="tab-btn active" data-tab="kanban">
+        <i class="fas fa-th"></i> Kanban Board
+    </button>
+    <button class="tab-btn" data-tab="tasks">
+        <i class="fas fa-list"></i> Task List
+    </button>
+    <button class="tab-btn" data-tab="gantt">
+        <i class="fas fa-chart-bar"></i> Gantt Chart
+    </button>
+    <button class="tab-btn" data-tab="team">
+        <i class="fas fa-users"></i> Team Members
+    </button>
+</div>
+
+<!-- Tab Contents -->
+<div class="tab-content active mb-4" id="kanban-tab">
+    <div class="kanban-board">
+        <div class="kanban-column">
+            <div class="kanban-header pending">
+                <h3><i class="fas fa-clock"></i> Pending</h3>
+                <span class="task-count">@(tasks?.Count(t => t.Status == task_management_system.Models.TaskStatus.Pending) ?? 0)</span>
+            </div>
+            <div class="kanban-tasks">
+                @if (tasks != null)
+                {
+                    @foreach (var task in tasks.Where(t => t.Status == task_management_system.Models.TaskStatus.Pending))
+                    {
+                        <div class="kanban-card" data-id="@task.Id">
+                            <h4>@task.Title</h4>
+                            <p>@task.Description</p>
+                            <div class="kanban-card-footer">
+                                <span class="priority-badge @task.Priority.ToString().ToLower()">@task.Priority</span>
+                                @if (task.DueDate.HasValue)
+                                {
+                                    <span class="due-date"><i class="fas fa-calendar"></i> @task.DueDate.Value.ToString("MMM dd")</span>
+                                }
+                            </div>
+                        </div>
+                    }
+                }
+            </div>
+        </div>
+        
+        <div class="kanban-column">
+            <div class="kanban-header in-progress">
+                <h3><i class="fas fa-spinner"></i> In Progress</h3>
+                <span class="task-count">@(tasks?.Count(t => t.Status == task_management_system.Models.TaskStatus.InProgress) ?? 0)</span>
+            </div>
+            <div class="kanban-tasks">
+                @if (tasks != null)
+                {
+                    @foreach (var task in tasks.Where(t => t.Status == task_management_system.Models.TaskStatus.InProgress))
+                    {
+                        <div class="kanban-card" data-id="@task.Id">
+                            <h4>@task.Title</h4>
+                            <p>@task.Description</p>
+                            <div class="kanban-card-footer">
+                                <span class="priority-badge @task.Priority.ToString().ToLower()">@task.Priority</span>
+                                @if (task.DueDate.HasValue)
+                                {
+                                    <span class="due-date"><i class="fas fa-calendar"></i> @task.DueDate.Value.ToString("MMM dd")</span>
+                                }
+                            </div>
+                        </div>
+                    }
+                }
+            </div>
+        </div>
+        
+        <div class="kanban-column">
+            <div class="kanban-header completed">
+                <h3><i class="fas fa-check"></i> Completed</h3>
+                <span class="task-count">@(tasks?.Count(t => t.Status == task_management_system.Models.TaskStatus.Completed) ?? 0)</span>
+            </div>
+            <div class="kanban-tasks">
+                @if (tasks != null)
+                {
+                    @foreach (var task in tasks.Where(t => t.Status == task_management_system.Models.TaskStatus.Completed))
+                    {
+                        <div class="kanban-card completed" data-id="@task.Id">
+                            <h4>@task.Title</h4>
+                            <p>@task.Description</p>
+                            <div class="kanban-card-footer">
+                                <span class="priority-badge @task.Priority.ToString().ToLower()">@task.Priority</span>
+                                @if (task.DueDate.HasValue)
+                                {
+                                    <span class="due-date"><i class="fas fa-calendar"></i> @task.DueDate.Value.ToString("MMM dd")</span>
+                                }
+                            </div>
+                        </div>
+                    }
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="tab-content mb-4" id="tasks-tab">
+    <div class="tasks-list-container">
+        @if (tasks?.Any() == true)
+        {
+            @foreach (var task in tasks.OrderByDescending(t => t.CreatedAt))
+            {
+                <div class="task-list-item @(task.IsCompleted ? "completed" : "")" data-id="@task.Id">
+                    <div class="task-checkbox">
+                        <input type="checkbox" @(task.IsCompleted ? "checked" : "")>
+                    </div>
+                    <div class="task-info">
+                        <h4>@task.Title</h4>
+                        <p>@task.Description</p>
+                        <div class="task-tags">
+                            <span class="status-badge @task.Status.ToString().ToLower()">@task.Status</span>
+                            <span class="priority-badge @task.Priority.ToString().ToLower()">@task.Priority</span>
+                            @if (task.DueDate.HasValue)
+                            {
+                                <span class="due-badge"><i class="fas fa-calendar"></i> @task.DueDate.Value.ToString("MMM dd, yyyy")</span>
+                            }
+                        </div>
+                    </div>
+                </div>
+            }
+        }
+        else
+        {
+            <div class="empty-state">
+                <i class="fas fa-tasks empty-icon"></i>
+                <h3>No tasks in this project</h3>
+                <p>Create tasks and assign them to this project to see them here.</p>
+            </div>
+        }
+    </div>
+</div>
+
+<div class="tab-content mb-4" id="gantt-tab">
+    <div class="gantt-container">
+        <div class="gantt-header">
+            <h3><i class="fas fa-chart-bar"></i> Project Timeline</h3>
+            <p>Visual representation of project tasks over time</p>
+        </div>
+        <div class="gantt-chart" id="ganttChart">
+            <!-- Gantt chart will be rendered here with JavaScript -->
+            <div class="gantt-placeholder">
+                <i class="fas fa-chart-gantt" style="font-size: 3rem; color: #ddd; margin-bottom: 1rem;"></i>
+                <p>Gantt chart visualization</p>
+                <small>Shows task timeline and dependencies</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="tab-content mb-4" id="team-tab">
+    <div class="team-container">
+        <div class="team-header">
+            <h3><i class="fas fa-users"></i> Team Members</h3>
+            <button class="btn btn-primary btn-sm" id="addMemberBtn">
+                <i class="fas fa-user-plus"></i> Add Member
+            </button>
+        </div>
+        <div class="team-members" id="teamMembersList">
+            <!-- Project Owner -->
+            <div class="team-member">
+                <div class="member-avatar">
+                    <i class="fas fa-user-crown"></i>
+                </div>
+                <div class="member-info">
+                    <h4>@ViewBag.UserName</h4>
+                    <p>Project Owner</p>
+                </div>
+                <span class="member-role owner">Owner</span>
+            </div>
+            
+            <!-- Dynamic Members -->
+            @if (ViewBag.ProjectMembers != null && ((List<task_management_system.Models.ProjectMember>)ViewBag.ProjectMembers).Any())
+            {
+                @foreach (var member in (List<task_management_system.Models.ProjectMember>)ViewBag.ProjectMembers)
+                {
+                    <div class="team-member" data-member-id="@member.UserId">
+                        <div class="member-avatar">
+                            <i class="fas fa-user"></i>
+                        </div>
+                        <div class="member-info">
+                            <h4>@member.UserName</h4>
+                            <p>@member.UserEmail</p>
+                            <small class="text-muted">Joined @member.JoinedAt.ToString("MMM dd, yyyy")</small>
+                        </div>
+                        <div class="member-actions">
+                            <span class="member-role @member.Role.ToString().ToLower()">@member.Role</span>
+                            <button class="btn-remove-member" title="Remove member" onclick="removeMember('@member.UserId', '@member.UserName')">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                    </div>
+                }
+            }
+            else
+            {
+                <div class="empty-team-state">
+                    <i class="fas fa-user-plus" style="font-size: 2rem; color: #ddd; margin-bottom: 1rem;"></i>
+                    <p>No team members yet</p>
+                    <small>Invite team members to collaborate on this project</small>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+<!-- Invite Member Modal -->
+<div class="modal-overlay" id="inviteMemberModal">
+    <div class="modal-container">
+        <div class="modal-header">
+            <h3><i class="fas fa-user-plus"></i> Invite Team Member</h3>
+            <button class="close-btn" id="closeInviteModal">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="modal-body">
+            <form id="inviteMemberForm">
+                <div class="form-group">
+                    <label for="memberEmail">
+                        <i class="fas fa-envelope"></i> Email Address
+                    </label>
+                    <input type="email" 
+                           class="form-control" 
+                           id="memberEmail" 
+                           name="email" 
+                           placeholder="Enter email address" 
+                           required>
+                    <small class="form-text text-muted">
+                        The user must have an account in the system to receive the invitation.
+                    </small>
+                </div>
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle"></i>
+                    <div>
+                        <strong>Viewer Access</strong>
+                        <p style="margin: 0; font-size: 0.9rem;">Members will have view-only access and can submit updates but cannot create or edit project content.</p>
+                    </div>
+                </div>
+            </form>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" id="cancelInviteBtn">Cancel</button>
+            <button type="button" class="btn btn-primary" id="sendInviteBtn">
+                <i class="fas fa-paper-plane"></i> Send Invitation
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Remove Member Confirmation Modal -->
+<div class="modal-overlay" id="removeMemberModal">
+    <div class="modal-container modal-sm">
+        <div class="modal-header modal-header-danger">
+            <h3><i class="fas fa-user-times"></i> Remove Member</h3>
+            <button class="close-btn" id="closeRemoveModal">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="modal-body">
+            <div class="confirmation-message">
+                <div class="confirmation-icon">
+                    <i class="fas fa-exclamation-triangle"></i>
+                </div>
+                <p>Are you sure you want to remove <strong id="memberNameToRemove"></strong> from this project?</p>
+                <p class="text-muted" style="font-size: 0.9rem; margin-top: 0.5rem;">This action cannot be undone. The member will lose access to this project immediately.</p>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" id="cancelRemoveBtn">Cancel</button>
+            <button type="button" class="btn btn-danger" id="confirmRemoveBtn">
+                <i class="fas fa-trash-alt"></i> Remove Member
+            </button>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        window.projectData = {
+            projectId: '@Model.Id',
+            projectName: '@Model.Name',
+            sendInvitationUrl: '@Url.Action("SendInvitation", "Projects")',
+            getMembersUrl: '@Url.Action("GetMembers", "Projects")',
+            removeMemberUrl: '@Url.Action("RemoveMember", "Projects")',
+            antiForgeryToken: '@Html.AntiForgeryToken()'
+        };
+    </script>
+    <script src="~/js/webpages-js/project-dashboard.js" asp-append-version="true"></script>
+}

@@ -1,0 +1,37 @@
+{
+  "Version": 1,
+  "WorkspaceRootPath": "C:\\Yeloe Task System\\",
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{B5B013D3-88A3-4F18-9E37-820B2646C3A4}|task-management-system\\task-management-system.csproj|c:\\yeloe task system\\task-management-system\\appsettings.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}",
+      "RelativeMoniker": "D:0:0:{B5B013D3-88A3-4F18-9E37-820B2646C3A4}|task-management-system\\task-management-system.csproj|solutionrelative:task-management-system\\appsettings.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}"
+    }
+  ],
+  "DocumentGroupContainers": [
+    {
+      "Orientation": 0,
+      "VerticalTabListWidth": 256,
+      "DocumentGroups": [
+        {
+          "DockedWidth": 200,
+          "SelectedChildIndex": 0,
+          "Children": [
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "appsettings.json",
+              "DocumentMoniker": "C:\\Yeloe Task System\\task-management-system\\appsettings.json",
+              "RelativeDocumentMoniker": "task-management-system\\appsettings.json",
+              "ToolTip": "C:\\Yeloe Task System\\task-management-system\\appsettings.json",
+              "RelativeToolTip": "task-management-system\\appsettings.json",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAUAAAAPAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001642|",
+              "WhenOpened": "2025-10-16T04:44:23.276Z",
+              "EditorCaption": ""
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

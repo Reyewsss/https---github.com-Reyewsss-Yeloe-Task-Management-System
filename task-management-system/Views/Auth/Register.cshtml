@@ -1,0 +1,112 @@
+﻿@{
+    Layout = "_AuthLayout";
+    ViewData["Title"] = "Register";
+    ViewData["MainTitle"] = "Join Yeloe Today";
+    ViewData["Tagline"] = "Create your account and start organizing your tasks like never before. Boost productivity with our powerful tools.";
+}
+
+@model task_management_system.ViewModels.RegisterViewModel
+
+<div class="auth-header">
+    <img src="/images/logo/yeloe-logo.png" alt="Yeloe Logo" class="auth-logo">
+    <h2>Create Account</h2>
+    <p>Join thousands of users managing tasks efficiently</p>
+</div>
+
+@if (!ViewData.ModelState.IsValid && ViewData.ModelState[""] != null)
+{
+    <div class="alert alert-danger">
+        @Html.ValidationSummary(false, "", new { @class = "mb-0" })
+    </div>
+}
+
+<form asp-action="Register" method="post" class="auth-form">
+    <div class="form-row">
+        <div class="form-group">
+            <label asp-for="FirstName" class="form-label">First Name</label>
+            <input asp-for="FirstName" class="form-control" placeholder="First name" />
+            <span asp-validation-for="FirstName" class="text-danger small"></span>
+        </div>
+        <div class="form-group">
+            <label asp-for="LastName" class="form-label">Last Name</label>
+            <input asp-for="LastName" class="form-control" placeholder="Last name" />
+            <span asp-validation-for="LastName" class="text-danger small"></span>
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label asp-for="Email" class="form-label">Email Address</label>
+        <input asp-for="Email" class="form-control" placeholder="Enter your email address" />
+        <span asp-validation-for="Email" class="text-danger small"></span>
+    </div>
+
+    <div class="form-group">
+        <label asp-for="Password" class="form-label">Password</label>
+        <div style="position: relative;">
+            <input asp-for="Password" type="password" class="form-control" placeholder="Create a strong password" id="passwordInput" />
+            <button type="button" class="password-toggle" onclick="togglePassword(this)">
+                <i class="fas fa-eye"></i>
+            </button>
+        </div>
+        <span asp-validation-for="Password" class="text-danger small"></span>
+        
+        @* Password Requirements *@
+        <div class="password-requirements mt-2">
+            <div class="requirement-header">
+                <small class="text-muted">Password must contain:</small>
+            </div>
+            <div class="requirements-list">
+                <div class="requirement" id="req-length">
+                    <i class="fas fa-times text-danger"></i>
+                    <span>At least 8 characters</span>
+                </div>
+                <div class="requirement" id="req-lowercase">
+                    <i class="fas fa-times text-danger"></i>
+                    <span>One lowercase letter</span>
+                </div>
+                <div class="requirement" id="req-uppercase">
+                    <i class="fas fa-times text-danger"></i>
+                    <span>One uppercase letter</span>
+                </div>
+                <div class="requirement" id="req-number">
+                    <i class="fas fa-times text-danger"></i>
+                    <span>One number</span>
+                </div>
+                <div class="requirement" id="req-special">
+                    <i class="fas fa-times text-danger"></i>
+                    <span>One special character (!@@#$%^&*)</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label asp-for="ConfirmPassword" class="form-label">Confirm Password</label>
+        <div style="position: relative;">
+            <input asp-for="ConfirmPassword" type="password" class="form-control" placeholder="Confirm your password" />
+            <button type="button" class="password-toggle" onclick="togglePassword(this)">
+                <i class="fas fa-eye"></i>
+            </button>
+        </div>
+        <span asp-validation-for="ConfirmPassword" class="text-danger small"></span>
+    </div>
+
+    <button type="submit" class="auth-btn">
+        <i class="fas fa-user-plus me-2"></i>Create My Account
+    </button>
+</form>
+
+<div class="text-center mt-1">
+    <p class="mb-0" style="font-size: 0.9rem;">
+        Already have an account? 
+        <a asp-action="Login" class="auth-link">Sign in here</a>
+    </p>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+    <script src="~/js/webpages-js/register.js" asp-append-version="true"></script>
+    <script src="~/js/auth.js" asp-append-version="true"></script>
+}

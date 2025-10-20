@@ -1,0 +1,186 @@
+@model task_management_system.Models.ProjectInvitation
+
+@{
+    ViewData["Title"] = "Project Invitation";
+    Layout = "_DashboardLayout";
+    var project = ViewBag.Project as task_management_system.Models.Project;
+}
+
+<link rel="stylesheet" href="~/css/webpages-css/invitation-page.css" asp-append-version="true" />
+
+<div class="invitation-container">
+    @if (Model != null && Model.Status == task_management_system.Models.InvitationStatus.Pending && Model.ExpiresAt > DateTime.UtcNow)
+    {
+        <!-- Pending Invitation -->
+        <div class="invitation-card">
+            <div class="invitation-header">
+                <div class="invitation-icon">
+                    <i class="fas fa-envelope-open"></i>
+                </div>
+                <h1>You're Invited!</h1>
+                <p class="subtitle">You've been invited to join a project</p>
+            </div>
+
+            <div class="invitation-body">
+                <div class="invitation-details">
+                    <div class="detail-item">
+                        <label><i class="fas fa-folder"></i> Project</label>
+                        <h2>@Model.ProjectName</h2>
+                    </div>
+
+                    @if (project != null)
+                    {
+                        <div class="detail-item">
+                            <label><i class="fas fa-align-left"></i> Description</label>
+                            <p>@(string.IsNullOrEmpty(project.Description) ? "No description provided" : project.Description)</p>
+                        </div>
+
+                        <div class="project-meta">
+                            <div class="meta-item">
+                                <i class="fas fa-flag"></i>
+                                <span class="priority-badge @project.Priority.ToString().ToLower()">@project.Priority Priority</span>
+                            </div>
+                            <div class="meta-item">
+                                <i class="fas fa-info-circle"></i>
+                                <span class="status-badge @project.Status.ToString().ToLower()">@project.Status</span>
+                            </div>
+                            @if (project.DueDate.HasValue)
+                            {
+                                <div class="meta-item">
+                                    <i class="fas fa-calendar"></i>
+                                    <span>Due: @project.DueDate.Value.ToString("MMM dd, yyyy")</span>
+                                </div>
+                            }
+                        </div>
+                    }
+
+                    <div class="detail-item">
+                        <label><i class="fas fa-user"></i> Invited by</label>
+                        <p><strong>@Model.InvitedByUserName</strong></p>
+                    </div>
+
+                    <div class="detail-item">
+                        <label><i class="fas fa-shield-alt"></i> Your Role</label>
+                        <div class="role-info">
+                            <span class="role-badge viewer">Viewer</span>
+                            <p class="role-description">You will have view-only access to the project and can submit updates.</p>
+                        </div>
+                    </div>
+
+                    <div class="detail-item">
+                        <label><i class="fas fa-clock"></i> Invitation Sent</label>
+                        <p>@Model.InvitedAt.ToString("MMMM dd, yyyy 'at' hh:mm tt")</p>
+                        <small class="text-muted">Expires on @Model.ExpiresAt.ToString("MMMM dd, yyyy")</small>
+                    </div>
+                </div>
+
+                <div class="permissions-info">
+                    <h3><i class="fas fa-info-circle"></i> What you can do as a Viewer</h3>
+                    <ul class="permissions-list">
+                        <li><i class="fas fa-check"></i> View all project details and tasks</li>
+                        <li><i class="fas fa-check"></i> See project progress and timeline</li>
+                        <li><i class="fas fa-check"></i> Submit updates and comments</li>
+                        <li><i class="fas fa-check"></i> Access the project dashboard</li>
+                    </ul>
+                    <ul class="permissions-list denied">
+                        <li><i class="fas fa-times"></i> Cannot create or edit tasks</li>
+                        <li><i class="fas fa-times"></i> Cannot modify project settings</li>
+                        <li><i class="fas fa-times"></i> Cannot invite other members</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="invitation-footer">
+                <form id="invitationResponseForm" method="post">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="invitationId" value="@Model.Id" />
+                    <button type="button" class="btn btn-secondary btn-lg" id="declineBtn">
+                        <i class="fas fa-times-circle"></i> Decline
+                    </button>
+                    <button type="button" class="btn btn-primary btn-lg" id="acceptBtn">
+                        <i class="fas fa-check-circle"></i> Accept Invitation
+                    </button>
+                </form>
+            </div>
+        </div>
+    }
+    else if (Model != null && Model.Status == task_management_system.Models.InvitationStatus.Accepted)
+    {
+        <!-- Already Accepted -->
+        <div class="invitation-card status-card success">
+            <div class="status-icon">
+                <i class="fas fa-check-circle"></i>
+            </div>
+            <h1>Invitation Already Accepted</h1>
+            <p>You've already accepted this invitation and are now a member of the project.</p>
+            <div class="action-buttons">
+                <a href="@Url.Action("Dashboard", "Projects", new { id = Model.ProjectId })" class="btn btn-primary">
+                    <i class="fas fa-folder-open"></i> Go to Project
+                </a>
+                <a href="@Url.Action("Index", "Projects")" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> Back to Projects
+                </a>
+            </div>
+        </div>
+    }
+    else if (Model != null && Model.Status == task_management_system.Models.InvitationStatus.Declined)
+    {
+        <!-- Already Declined -->
+        <div class="invitation-card status-card declined">
+            <div class="status-icon">
+                <i class="fas fa-times-circle"></i>
+            </div>
+            <h1>Invitation Declined</h1>
+            <p>You've declined this invitation. If this was a mistake, please contact the project owner.</p>
+            <div class="action-buttons">
+                <a href="@Url.Action("Index", "Projects")" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> Back to Projects
+                </a>
+            </div>
+        </div>
+    }
+    else if (Model != null && (Model.Status == task_management_system.Models.InvitationStatus.Expired || Model.ExpiresAt <= DateTime.UtcNow))
+    {
+        <!-- Expired -->
+        <div class="invitation-card status-card expired">
+            <div class="status-icon">
+                <i class="fas fa-hourglass-end"></i>
+            </div>
+            <h1>Invitation Expired</h1>
+            <p>This invitation has expired. Please contact <strong>@Model.InvitedByUserName</strong> to request a new invitation.</p>
+            <div class="action-buttons">
+                <a href="@Url.Action("Index", "Projects")" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> Back to Projects
+                </a>
+            </div>
+        </div>
+    }
+    else
+    {
+        <!-- Invalid -->
+        <div class="invitation-card status-card error">
+            <div class="status-icon">
+                <i class="fas fa-exclamation-circle"></i>
+            </div>
+            <h1>Invalid Invitation</h1>
+            <p>This invitation link is invalid or no longer available.</p>
+            <div class="action-buttons">
+                <a href="@Url.Action("Index", "Projects")" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> Back to Projects
+                </a>
+            </div>
+        </div>
+    }
+</div>
+
+@section Scripts {
+    <script>
+        window.invitationData = {
+            acceptUrl: '@Url.Action("AcceptInvitation", "Projects")',
+            declineUrl: '@Url.Action("DeclineInvitation", "Projects")',
+            projectDashboardUrl: '@(Model != null ? Url.Action("Dashboard", "Projects", new { id = Model.ProjectId }) : "")',
+            projectsUrl: '@Url.Action("Index", "Projects")'
+        };
+    </script>
+    <script src="~/js/webpages-js/invitation-page.js" asp-append-version="true"></script>
+}

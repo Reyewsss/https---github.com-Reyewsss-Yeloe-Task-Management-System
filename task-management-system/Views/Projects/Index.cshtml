@@ -1,0 +1,158 @@
+﻿@model List<task_management_system.Models.Project>
+
+@{
+    ViewData["Title"] = "Projects";
+    Layout = "_DashboardLayout";
+}
+
+<link rel="stylesheet" href="~/css/webpages-css/projects-page.css" asp-append-version="true" />
+
+<!-- Projects Page Content -->
+<div class="page-header">
+    <div class="header-left">
+        <h1><i class="fas fa-folder-open"></i> Projects</h1>
+        <p>Manage and organize your projects</p>
+    </div>
+    <div class="header-right">
+        <button class="btn btn-primary" id="newProjectBtn">
+            <i class="fas fa-plus"></i> New Project
+        </button>
+    </div>
+</div>
+
+<div class="projects-grid">
+ @if (Model?.Any() == true)
+    {
+        @foreach (var project in Model)
+        {
+            <div class="project-card" data-id="@project.Id" onclick="window.location.href='@Url.Action("Dashboard", "Projects", new { id = project.Id })'">
+                <div class="project-header">
+                    <h3>@project.Name</h3>
+                    <span class="project-status @project.Status.ToString().ToLower().Replace(" ", "-")">@project.Status</span>
+                </div>
+                <p class="project-description">@project.Description</p>
+                <div class="project-meta">
+                    <div class="project-dates">
+                        @if (project.StartDate.HasValue)
+                        {
+                            <small>Started: @project.StartDate.Value.ToString("MMM dd, yyyy")</small>
+                
+                            <br>
+                        }
+                        @if (project.DueDate.HasValue)
+                        {
+                            <small>Due: @project.DueDate.Value.ToString("MMM dd, yyyy")</small>
+                        }
+                    </div>
+                    <div class="project-actions">
+                        <button class="btn-icon edit" onclick="event.stopPropagation(); editProject('@project.Id')"><i class="fas fa-edit"></i></button>
+                        <button class="btn-icon delete" onclick="event.stopPropagation(); deleteProject('@project.Id')"><i class="fas fa-trash"></i></button>
+                    </div>
+                </div>
+            </div>
+        }
+    }
+    else
+    {
+        <div class="empty-state">
+            <i class="fas fa-folder-open empty-icon"></i>
+            <h3>No projects yet</h3>
+            <p>Create your first project to get started with organizing your work.</p>
+        </div>
+    }
+</div>
+
+<!-- New Project Modal -->
+<div class="yeloe-modal-overlay" id="projectModalOverlay">
+    <div class="yeloe-modal" id="projectModal">
+        <form id="createProjectForm">
+            @Html.AntiForgeryToken()
+            <div class="yeloe-modal-header">
+                <h4 class="yeloe-modal-title" id="modalTitle">Create New Project</h4>
+                <p class="yeloe-modal-subtitle" id="modalSubtitle">Add a new project to your workflow</p>
+            </div>
+
+            <div class="yeloe-modal-body">
+                <input type="hidden" id="projectId" name="Id">
+                <div class="form-group full-width">
+                    <label for="projectName" class="form-label">Project Name *</label>
+                    <input type="text" id="projectName" name="Name" class="form-control"
+                           placeholder="Enter project name..." required>
+                    <span class="error-message" id="nameError"></span>
+                </div>
+
+                <div class="form-group full-width">
+                    <label for="projectDescription" class="form-label">Description</label>
+                    <textarea id="projectDescription" name="Description" class="form-control"
+                              rows="3" placeholder="Describe your project..."></textarea>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="projectStatus" class="form-label">Status</label>
+                        <select id="projectStatus" name="Status" class="form-control">
+                            <option value="Planning">Planning</option>
+                            <option value="Active" selected>Active</option>
+                            <option value="OnHold">On Hold</option>
+                            <option value="Completed">Completed</option>
+                            <option value="Cancelled">Cancelled</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="projectPriority" class="form-label">Priority</label>
+                        <select id="projectPriority" name="Priority" class="form-control">
+                            <option value="Low">Low Priority</option>
+                            <option value="Medium" selected>Medium Priority</option>
+                            <option value="High">High Priority</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="projectStartDate" class="form-label">Start Date</label>
+                        <input type="date" id="projectStartDate" name="StartDate" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label for="projectDueDate" class="form-label">Due Date</label>
+                        <input type="date" id="projectDueDate" name="DueDate" class="form-control">
+                    </div>
+                </div>
+
+            <div class="yeloe-modal-footer">
+                <button type="button" class="task-modal-btn task-modal-btn-cancel" id="cancelProjectBtn">
+                    <i class="fas fa-times"></i>
+                    <span>Cancel</span>
+                </button>
+                <button type="submit" class="task-modal-btn task-modal-btn-submit" id="submitProjectBtn">
+                    <i class="fas fa-plus"></i>
+                    <span id="submitBtnText">Create Project</span>
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Simple Success Modal -->
+<div class="success-modal-overlay" id="successModalOverlay">
+    <div class="success-modal">
+        <i class="fas fa-check success-icon"></i>
+        <h3>Success</h3>
+        <p>Project created successfully!</p>
+        <button class="success-btn" id="successOkBtn">OK</button>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        window.projectUrls = {
+            createUrl: '@Url.Action("Create", "Projects")',
+            getUrl: '@Url.Action("GetProject", "Projects")',
+            updateUrl: '@Url.Action("Update", "Projects")',
+            deleteUrl: '@Url.Action("Delete", "Projects")',
+            updateProgressUrl: '@Url.Action("UpdateProgress", "Projects")'
+        };
+    </script>
+    <script src="~/js/webpages-js/project-page.js" asp-append-version="true"></script>
+}
+</div>

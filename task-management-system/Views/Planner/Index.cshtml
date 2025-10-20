@@ -1,0 +1,176 @@
+@{
+    ViewData["Title"] = "Planner";
+    Layout = "_DashboardLayout";
+}
+
+<link rel="stylesheet" href="~/css/webpages-css/planner.css" asp-append-version="true" />
+<link href='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.css' rel='stylesheet' />
+
+<!-- Planner Header -->
+<div class="planner-header">
+    <div class="header-left">
+        <h1><i class="fas fa-calendar"></i> Planner</h1>
+        <p>Manage your schedule and view all your tasks and projects</p>
+    </div>
+    <div class="header-right">
+        <button class="btn btn-secondary" id="syncGoogleBtn" title="Sync with Google Calendar">
+            <i class="fab fa-google"></i> Sync Google Calendar
+        </button>
+    </div>
+</div>
+
+<!-- Calendar View Controls -->
+<div class="calendar-controls">
+    <div class="view-controls">
+        <button class="view-btn active" data-view="month">
+            <i class="fas fa-calendar"></i> Month
+        </button>
+        <button class="view-btn" data-view="week">
+            <i class="fas fa-calendar-week"></i> Week
+        </button>
+        <button class="view-btn" data-view="day">
+            <i class="fas fa-calendar-day"></i> Day
+        </button>
+        <button class="view-btn" data-view="list">
+            <i class="fas fa-list"></i> Agenda
+        </button>
+    </div>
+    <div class="calendar-legend">
+        <div class="legend-item">
+            <span class="legend-dot high"></span>
+            <span>High Priority</span>
+        </div>
+        <div class="legend-item">
+            <span class="legend-dot medium"></span>
+            <span>Medium Priority</span>
+        </div>
+        <div class="legend-item">
+            <span class="legend-dot low"></span>
+            <span>Low Priority</span>
+        </div>
+        <div class="legend-item">
+            <span class="legend-dot project"></span>
+            <span>Projects</span>
+        </div>
+    </div>
+</div>
+
+<!-- Calendar Container -->
+<div class="calendar-container">
+    <div id="calendar"></div>
+</div>
+
+<!-- Event Detail Modal -->
+<div class="event-modal-overlay" id="eventModalOverlay">
+    <div class="event-modal">
+        <div class="event-modal-header">
+            <h3 id="eventTitle">Event Details</h3>
+            <button class="close-btn" id="closeEventModal">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="event-modal-body">
+            <div class="event-detail">
+                <i class="fas fa-align-left"></i>
+                <div>
+                    <label>Description</label>
+                    <p id="eventDescription">No description</p>
+                </div>
+            </div>
+            <div class="event-detail">
+                <i class="fas fa-calendar"></i>
+                <div>
+                    <label>Date</label>
+                    <p id="eventDate"></p>
+                </div>
+            </div>
+            <div class="event-detail" id="eventProjectDetail" style="display: none;">
+                <i class="fas fa-folder"></i>
+                <div>
+                    <label>Project</label>
+                    <p id="eventProject"></p>
+                </div>
+            </div>
+            <div class="event-detail">
+                <i class="fas fa-info-circle"></i>
+                <div>
+                    <label>Status</label>
+                    <p id="eventStatus"></p>
+                </div>
+            </div>
+        </div>
+        <div class="event-modal-footer">
+            <button class="btn btn-secondary" id="editEventBtn">
+                <i class="fas fa-edit"></i> Edit
+            </button>
+            <button class="btn btn-danger" id="deleteEventBtn">
+                <i class="fas fa-trash"></i> Delete
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Google Calendar Sync Modal -->
+<div class="sync-modal-overlay" id="syncModalOverlay">
+    <div class="sync-modal">
+        <div class="sync-modal-header">
+            <h3><i class="fab fa-google"></i> Connect Google Calendar</h3>
+            <button class="close-btn" id="closeSyncModal">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="sync-modal-body">
+            <div class="sync-info">
+                <i class="fas fa-info-circle"></i>
+                <p>Connect your Google Calendar to sync your tasks and events seamlessly.</p>
+            </div>
+            <div class="sync-features">
+                <div class="feature-item">
+                    <i class="fas fa-check-circle"></i>
+                    <span>Two-way sync with Google Calendar</span>
+                </div>
+                <div class="feature-item">
+                    <i class="fas fa-check-circle"></i>
+                    <span>Automatic task updates</span>
+                </div>
+                <div class="feature-item">
+                    <i class="fas fa-check-circle"></i>
+                    <span>View all events in one place</span>
+                </div>
+            </div>
+            <div class="sync-status" id="syncStatus" style="display: none;">
+                <i class="fas fa-spinner fa-spin"></i>
+                <p>Connecting to Google Calendar...</p>
+            </div>
+        </div>
+        <div class="sync-modal-footer">
+            <button class="btn btn-secondary" data-dismiss="modal" id="cancelSyncBtn">
+                Cancel
+            </button>
+            <button class="btn btn-primary" id="confirmSyncBtn">
+                <i class="fab fa-google"></i> Connect Now
+            </button>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js'></script>
+    <script src='https://cdn.jsdelivr.net/npm/@@fullcalendar/google-calendar@6.1.10/index.global.min.js'></script>
+    <script>
+        window.plannerUrls = {
+            getEventsUrl: '@Url.Action("GetCalendarEvents", "Planner")',
+            editTaskUrl: '@Url.Action("Index", "Task")',
+            editProjectUrl: '@Url.Action("Dashboard", "Projects")'
+        };
+        
+        // Google Calendar API credentials (you'll need to set these up)
+        window.googleCalendarConfig = {
+            apiKey: 'YOUR_GOOGLE_API_KEY', // Replace with your API key
+            clientId: 'YOUR_CLIENT_ID', // Replace with your Client ID
+            discoveryDocs: ['https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest'],
+            scope: 'https://www.googleapis.com/auth/calendar.readonly'
+        };
+    </script>
+    <script src="~/js/webpages-js/planner.js" asp-append-version="true"></script>
+}

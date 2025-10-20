@@ -1,0 +1,190 @@
+﻿@{
+    ViewData["Title"] = "Home";
+}
+
+<link rel="stylesheet" href="~/css/homepage/homepage.css" asp-append-version="true" />
+<link rel="stylesheet" href="~/css/homepage/hero-section.css" asp-append-version="true" />
+<link rel="stylesheet" href="~/css/homepage/features-section.css" asp-append-version="true" />
+<link rel="stylesheet" href="~/css/homepage/about-section.css" asp-append-version="true" />
+
+<!-- Hero Section -->
+<section id="hero" class="hero modern-hero fullscreen-hero">
+    <div class="hero-shapes">
+        <div class="shape shape-1"></div>
+        <div class="shape shape-2"></div>
+        <div class="shape shape-3"></div>
+    </div>
+
+    <div class="hero-content-wrapper">
+        <div class="container position-relative">
+            <div class="row align-items-center">
+                <!-- Hero Text Content with Custom Animations -->
+                <div class="col-lg-6 hero-content hero-text-reveal">
+                    <h1 class="slide-up">Manage Tasks <span class="gradient-text">with Ease</span></h1>
+                    <p class="fade-in-left">Yeloe helps teams organize, track, and manage their work efficiently. Boost productivity and achieve your goals faster.</p>
+                    <div class="hero-buttons scale-up">
+                        <a asp-controller="Auth" asp-action="Login" class="hero-btn primary-btn">
+                            <span>Sign in</span>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Hero Image with Custom Animations -->
+                <div class="col-lg-6 hero-image-container hero-image-reveal">
+                    <div class="image-wrapper">
+                        <img src="~/images/banner/banner-1.jfif" alt="Task Management Dashboard" class="hero-image">
+                        <div class="floating-card card-1 scale-up">
+                            <i class="fas fa-check-circle"></i>
+                            <span>Tasks Completion</span>
+                            <strong>+28%</strong>
+                        </div>
+                        <div class="floating-card card-2 rotate-fade">
+                            <i class="fas fa-users"></i>
+                            <span>Team Productivity</span>
+                            <div class="mini-chart">
+                                <div class="bar" style="height: 15px;"></div>
+                                <div class="bar" style="height: 25px;"></div>
+                                <div class="bar" style="height: 18px;"></div>
+                                <div class="bar" style="height: 30px;"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Features Section -->
+<section id="features" class="features-section animate-section">
+    <div class="container">
+        <!-- Section Header with Animation -->
+        <div class="section-header text-center fade-in-left">
+            <span class="section-badge slide-up">Core Features</span>
+            <h2 class="slide-up">Everything You Need to <span class="title-2">Manage Tasks</span></h2>
+            <p class="fade-in-right">Yeloe provides powerful tools to streamline your workflow and boost team productivity</p>
+        </div>
+
+        <!-- Feature Cards with Stagger Animation -->
+        <div class="row features-row">
+            <!-- Feature Card 1 -->
+            <div class="col-lg-3 col-md-6">
+                <div class="feature-card stagger-item">
+                    <div class="feature-icon">
+                        <i class="fas fa-tachometer-alt"></i>
+                    </div>
+                    <h3>Centralized Dashboard</h3>
+                    <p>Get a complete overview of all your projects, tasks, and team activities in one place.</p>
+                    <ul class="feature-list">
+                        <li><i class="fas fa-check"></i> Real-time updates</li>
+                        <li><i class="fas fa-check"></i> Customizable widgets</li>
+                        <li><i class="fas fa-check"></i> Performance metrics</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Feature Card 2 -->
+            <div class="col-lg-3 col-md-6">
+                <div class="feature-card stagger-item">
+                    <div class="feature-icon">
+                        <i class="fas fa-project-diagram"></i>
+                    </div>
+                    <h3>Project Management</h3>
+                    <p>Create, organize, and track projects with powerful management tools designed for teams.</p>
+                    <ul class="feature-list">
+                        <li><i class="fas fa-check"></i> Multiple view options</li>
+                        <li><i class="fas fa-check"></i> Resource allocation</li>
+                        <li><i class="fas fa-check"></i> Progress tracking</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Feature Card 3 -->
+            <div class="col-lg-3 col-md-6">
+                <div class="feature-card stagger-item">
+                    <div class="feature-icon">
+                        <i class="fas fa-tasks"></i>
+                    </div>
+                    <h3>Actionable Task Breakdown</h3>
+                    <p>Break down complex tasks into manageable subtasks and detailed checklists.</p>
+                    <ul class="feature-list">
+                        <li><i class="fas fa-check"></i> Nested subtasks</li>
+                        <li><i class="fas fa-check"></i> Interactive checklists</li>
+                        <li><i class="fas fa-check"></i> Task dependencies</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Feature Card 4 -->
+            <div class="col-lg-3 col-md-6">
+                <div class="feature-card stagger-item">
+                    <div class="feature-icon">
+                        <i class="fas fa-chart-gantt"></i>
+                    </div>
+                    <h3>Basic Gantt / Timeline</h3>
+                    <p>Visualize project schedules and track progress with intuitive Gantt charts and timelines.</p>
+                    <ul class="feature-list">
+                        <li><i class="fas fa-check"></i> Drag-and-drop interface</li>
+                        <li><i class="fas fa-check"></i> Milestone tracking</li>
+                        <li><i class="fas fa-check"></i> Timeline visualization</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- About Section -->
+<section id="about" class="about-section animate-section">
+    <div class="container">
+        <div class="row align-items-center">
+            <!-- About Image Grid with Icon Animations -->
+            <div class="col-lg-6 fade-in-right">
+                <div class="about-image">
+                    <div class="icon-grid">
+                        <div class="icon-box large primary icon-reveal">
+                            <i class="fas fa-tasks"></i>
+                        </div>
+                        <div class="icon-box icon-reveal">
+                            <i class="fas fa-chart-line"></i>
+                        </div>
+                        <div class="icon-box icon-reveal">
+                            <i class="fas fa-users"></i>
+                        </div>
+                        <div class="icon-box accent icon-reveal">
+                            <i class="fas fa-calendar-check"></i>
+                        </div>
+                        <div class="icon-box icon-reveal">
+                            <i class="fas fa-cogs"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- About Content with Text Animations -->
+            <div class="col-lg-6 fade-in-left">
+                <div class="about-content">
+                    <h2 class="slide-up">We Help Teams <span class="title-2">Work Smarter</span></h2>
+                    <p class="lead slide-up">Yeloe has been transforming how teams collaborate and manage projects.</p>
+                    <p class="fade-in-right">Our mission is to create intuitive tools that simplify complex workflows and boost productivity. We believe that effective task management is the foundation of successful projects.</p>
+
+                    <!-- Stats Row with Scale Animation -->
+                    <div class="stats-row">
+                        <div class="stat-item scale-up">
+                            <span class="stat-number">10k+</span>
+                            <span class="stat-label">Soon Active Users</span>
+                        </div>
+                        <div class="stat-item scale-up">
+                            <span class="stat-number">98%</span>
+                            <span class="stat-label">Customer Satisfaction</span>
+                        </div>
+                        <div class="stat-item scale-up">
+                            <span class="stat-number">24/7</span>
+                            <span class="stat-label">Support</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>

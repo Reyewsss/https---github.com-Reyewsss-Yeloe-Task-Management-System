@@ -1,0 +1,155 @@
+﻿@model List<task_management_system.Models.AddTask>
+
+@{
+    ViewData["Title"] = "Tasks";
+    Layout = "_DashboardLayout";
+}
+
+<link rel="stylesheet" href="~/css/webpages-css/task-page.css" asp-append-version="true" />
+
+<!-- Tasks Page Content -->
+<div class="page-header">
+    <div class="header-left">
+        <h1><i class="fas fa-tasks"></i> Tasks</h1>
+        <p>Manage your tasks and stay organized</p>
+    </div>
+    <div class="header-right">
+        <button class="btn btn-primary" id="newTaskBtn">
+            <i class="fas fa-plus"></i> New Task
+        </button>
+    </div>
+</div>
+
+<div class="tasks-filters">
+    <button class="filter-btn active" data-filter="all">All Tasks</button>
+    <button class="filter-btn" data-filter="pending">Pending</button>
+    <button class="filter-btn" data-filter="in-progress">In Progress</button>
+    <button class="filter-btn" data-filter="completed">Completed</button>
+</div>
+
+<div class="tasks-container" id="tasksContainer">
+  @if (Model?.Any() == true)
+    {
+        @foreach (var task in Model)
+        {
+            <div class="task-item" data-status="@task.Status.ToString().ToLower()" data-id="@task.Id" onclick="window.location.href='@Url.Action("Dashboard", "Task", new { id = task.Id })'" style="cursor: pointer;">
+                <div class="task-checkbox" onclick="event.stopPropagation();">
+                    <input type="checkbox" id="task-@task.Id" @(task.IsCompleted ? "checked" : "")
+                           onchange="toggleTaskComplete('@task.Id')">
+                    <label for="task-@task.Id"></label>
+                </div>
+                <div class="task-content @(task.IsCompleted ? "completed" : "")">
+                    <h4>@task.Title</h4>
+                    <p class="task-description">@task.Description</p>
+                    <div class="task-meta">
+                        @if (!string.IsNullOrEmpty(task.Project))
+                        {
+                            <span class="task-project">@task.Project</span>
+                        }
+                        @if (task.DueDate.HasValue)
+                        {
+                            <span class="task-due">Due: @task.DueDate.Value.ToString("MMM dd, yyyy")</span>
+                        }
+                        <span class="task-priority @task.Priority.ToString().ToLower()">@task.Priority Priority</span>
+                    </div>
+                </div>
+                <div class="task-actions" onclick="event.stopPropagation();">
+                    <button class="btn-icon edit" onclick="editTask('@task.Id')"><i class="fas fa-edit"></i></button>
+                    <button class="btn-icon delete" onclick="deleteTask('@task.Id')"><i class="fas fa-trash"></i></button>
+                </div>
+            </div>
+        }
+    }
+    else
+    {
+        <div class="empty-state">
+            <i class="fas fa-tasks empty-icon"></i>
+            <h3>No tasks yet</h3>
+            <p>Create your first task to get started with managing your work.</p>
+        </div>
+    }
+</div>
+
+<!-- New Task Modal - Wide Version -->
+<div class="yeloe-modal-overlay" id="taskModalOverlay">
+    <div class="yeloe-modal" id="taskModal">
+        <form id="createTaskForm">
+            <div class="yeloe-modal-header">
+                <h4 class="yeloe-modal-title">Create New Task</h4>
+                <p class="yeloe-modal-subtitle">Add a new task to your workflow</p>
+            </div>
+
+            <div class="yeloe-modal-body">
+                <div class="form-group full-width">
+                    <label for="taskTitle" class="form-label">Task Title *</label>
+                    <input type="text" id="taskTitle" name="Title" class="form-control"
+                           placeholder="Enter task title..." required>
+                    <span class="error-message" id="titleError"></span>
+                </div>
+
+                <div class="form-group full-width">
+                    <label for="taskDescription" class="form-label">Description</label>
+                    <textarea id="taskDescription" name="Description" class="form-control"
+                              rows="3" placeholder="Describe your task..."></textarea>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="taskProject" class="form-label">Project</label>
+                        <select id="taskProject" name="Project" class="form-control">
+                            <option value="">-- Select or Create Project --</option>
+                            <option value="Project 1" selected>Project 1</option>
+                            @if (ViewBag.Projects != null)
+                            {
+                                @foreach (var project in ViewBag.Projects)
+                                {
+                                    <option value="@project.Name">@project.Name</option>
+                                }
+                            }
+                            <option value="__new__">+ Create New Project...</option>
+                        </select>
+                        <input type="text" id="taskProjectCustom" class="form-control" 
+                               placeholder="Enter new project name" style="display: none; margin-top: 10px;">
+                    </div>
+                    <div class="form-group">
+                        <label for="taskDueDate" class="form-label">Due Date</label>
+                        <input type="date" id="taskDueDate" name="DueDate" class="form-control">
+                    </div>
+                </div>
+
+                <div class="form-group full-width">
+                    <label for="taskPriority" class="form-label">Priority</label>
+                    <select id="taskPriority" name="Priority" class="form-control">
+                        <option value="Low">Low Priority</option>
+                        <option value="Medium" selected>Medium Priority</option>
+                        <option value="High">High Priority</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="yeloe-modal-footer">
+                <button type="button" class="task-modal-btn task-modal-btn-cancel" id="cancelTaskBtn">
+                    <i class="fas fa-times"></i>
+                    <span>Cancel</span>
+                </button>
+                <button type="submit" class="task-modal-btn task-modal-btn-submit" id="createTaskBtn">
+                    <i class="fas fa-plus"></i>
+                    <span>Create Task</span>
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        window.taskUrls = {
+            createUrl: '@Url.Action("Create", "Task")',
+            updateUrl: '@Url.Action("Update", "Task")',
+            getTaskUrl: '@Url.Action("GetTask", "Task")',
+            completeUrl: '@Url.Action("Complete", "Task")',
+            deleteUrl: '@Url.Action("Delete", "Task")'
+        };
+    </script>
+    <script src="~/js/webpages-js/task-page.js" asp-append-version="true"></script>
+}

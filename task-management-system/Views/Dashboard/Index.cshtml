@@ -1,0 +1,248 @@
+﻿@{
+    ViewData["Title"] = "Dashboard";
+    Layout = "_DashboardLayout";
+}
+
+<link rel="stylesheet" href="~/css/dashboard-css/dashboard.css" asp-append-version="true" />
+
+    <!-- Welcome Section -->
+    <div class="welcome-section">
+        <div class="welcome-content">
+            <h1 class="welcome-title">Hello, @ViewBag.UserName! 👋</h1>
+            <p class="welcome-subtitle">Here's what's happening with your projects today.</p>
+        </div>
+        <div class="welcome-date">
+            <i class="fas fa-calendar-alt"></i>
+            <span id="currentDate"></span>
+        </div>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-icon">
+                <i class="fas fa-tasks"></i>
+            </div>
+            <div class="stat-content">
+                <h3 class="stat-number" id="totalTasks">@ViewBag.TotalTasks</h3>
+                <p class="stat-label">Total Tasks</p>
+                <span class="stat-trend">
+                    <i class="fas fa-arrow-up"></i> Active tasks
+                </span>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon">
+                <i class="fas fa-check-circle"></i>
+            </div>
+            <div class="stat-content">
+                <h3 class="stat-number" id="completedTasks">@ViewBag.CompletedTasks</h3>
+                <p class="stat-label">Completed</p>
+                <span class="stat-trend">
+                    <i class="fas fa-arrow-up"></i> Tasks completed
+                </span>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon">
+                <i class="fas fa-clock"></i>
+            </div>
+            <div class="stat-content">
+                <h3 class="stat-number" id="pendingTasks">@ViewBag.PendingTasks</h3>
+                <p class="stat-label">In Progress</p>
+                <span class="stat-trend">
+                    <i class="fas fa-minus"></i> Tasks remaining
+                </span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts and Activity Section -->
+    <div class="dashboard-grid">
+        <!-- Task Progress Chart -->
+        <div class="dashboard-card chart-card">
+            <div class="card-header">
+                <h3 class="card-title">
+                    <i class="fas fa-chart-line"></i>
+                    Task Progress Overview
+                </h3>
+                <div class="card-actions">
+                    <button class="btn-icon" title="Refresh">
+                        <i class="fas fa-sync-alt"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="card-content">
+                <div class="progress-chart">
+                    <canvas id="taskProgressChart" width="400" height="200"></canvas>
+                </div>
+                <div class="chart-legend">
+                    <div class="legend-item">
+                        <span class="legend-color completed"></span>
+                        <span>Completed (@(ViewBag.TotalTasks > 0 ? Math.Round((double)ViewBag.CompletedTasks / ViewBag.TotalTasks * 100, 1) : 0)%)</span>
+                    </div>
+                    <div class="legend-item">
+                        <span class="legend-color in-progress"></span>
+                        <span>In Progress (@(ViewBag.TotalTasks > 0 ? Math.Round((double)ViewBag.PendingTasks / ViewBag.TotalTasks * 100, 1) : 0)%)</span>
+                    </div>
+                    <div class="legend-item">
+                        <span class="legend-color pending"></span>
+                        <span>Not Started (0%)</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Activity -->
+        <div class="dashboard-card activity-card">
+            <div class="card-header">
+                <h3 class="card-title">
+                    <i class="fas fa-clock"></i>
+                    Recent Activity
+                </h3>
+                <a href="#" class="view-all-link">View All</a>
+            </div>
+            <div class="card-content">
+                <div class="activity-list">
+                    <div class="activity-item">
+                        <div class="activity-icon">
+                            <i class="fas fa-check"></i>
+                        </div>
+                        <div class="activity-content">
+                            <p class="activity-text">Task "Design Review" completed</p>
+                            <span class="activity-time">2 hours ago</span>
+                        </div>
+                    </div>
+                    <div class="activity-item">
+                        <div class="activity-icon">
+                            <i class="fas fa-plus"></i>
+                        </div>
+                        <div class="activity-content">
+                            <p class="activity-text">New project "Mobile App" created</p>
+                            <span class="activity-time">4 hours ago</span>
+                        </div>
+                    </div>
+                    <div class="activity-item">
+                        <div class="activity-icon">
+                            <i class="fas fa-edit"></i>
+                        </div>
+                        <div class="activity-content">
+                            <p class="activity-text">Task "API Development" updated</p>
+                            <span class="activity-time">6 hours ago</span>
+                        </div>
+                    </div>
+                    <div class="activity-item">
+                        <div class="activity-icon">
+                            <i class="fas fa-user-plus"></i>
+                        </div>
+                        <div class="activity-content">
+                            <p class="activity-text">You were assigned to "Database Migration"</p>
+                            <span class="activity-time">1 day ago</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Upcoming Deadlines -->
+        <div class="dashboard-card deadlines-card">
+            <div class="card-header">
+                <h3 class="card-title">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    Upcoming Deadlines
+                </h3>
+            </div>
+            <div class="card-content">
+                <div class="deadlines-list">
+                    <div class="deadline-item">
+                        <div class="deadline-info">
+                            <h4>Website Redesign</h4>
+                            <p>Final review and deployment</p>
+                        </div>
+                        <div class="deadline-time">
+                            <span class="time-badge">2 days</span>
+                        </div>
+                    </div>
+                    <div class="deadline-item">
+                        <div class="deadline-info">
+                            <h4>API Documentation</h4>
+                            <p>Complete technical documentation</p>
+                        </div>
+                        <div class="deadline-time">
+                            <span class="time-badge">5 days</span>
+                        </div>
+                    </div>
+                    <div class="deadline-item">
+                        <div class="deadline-info">
+                            <h4>Mobile App Testing</h4>
+                            <p>User acceptance testing phase</p>
+                        </div>
+                        <div class="deadline-time">
+                            <span class="time-badge">1 week</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+         <!-- Agenda Section - Now properly positioned -->
+    <div class="dashboard-card agenda-card">
+        <div class="card-header">
+            <h3 class="card-title">
+                <i class="fas fa-calendar-day"></i>
+                Today's Agenda
+            </h3>
+        </div>
+        <div class="card-content">
+            <div class="agenda-list">
+                <div class="agenda-item">
+                    <div class="agenda-time">
+                        <span class="time-slot">09:00 AM</span>
+                    </div>
+                    <div class="agenda-content">
+                        <h4>Team Standup Meeting</h4>
+                        <p>Daily project sync with development team</p>
+                        <span class="agenda-location">
+                            <i class="fas fa-video"></i>
+                            Conference Room A
+                        </span>
+                    </div>
+                </div>
+                <div class="agenda-item">
+                    <div class="agenda-time">
+                        <span class="time-slot">11:30 AM</span>
+                    </div>
+                    <div class="agenda-content">
+                        <h4>Client Presentation</h4>
+                        <p>Demo of new features to client stakeholders</p>
+                        <span class="agenda-location">
+                            <i class="fas fa-video"></i>
+                            Virtual Meeting
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    </div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        // Dashboard data for JavaScript
+        window.dashboardData = {
+            totalTasks: @ViewBag.TotalTasks,
+            completedTasks: @ViewBag.CompletedTasks,
+            pendingTasks: @ViewBag.PendingTasks
+        };
+
+        // Dashboard URLs for JavaScript
+        window.dashboardUrls = {
+            taskUrl: '@Url.Action("Index", "Task")',
+            projectUrl: '@Url.Action("Index", "Projects")',
+        };
+    </script>
+    <script src="~/js/webpages-js/dashboard.js" asp-append-version="true"></script>
+}

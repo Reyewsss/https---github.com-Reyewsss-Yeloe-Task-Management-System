@@ -1,0 +1,54 @@
+@model task_management_system.Models.User
+@{
+    ViewData["Title"] = "Settings";
+    Layout = "_DashboardLayout";
+}
+
+<link rel="stylesheet" href="~/css/webpages-css/account-page.css" asp-append-version="true" />
+
+<!-- Preferences Section -->
+    <div class="account-card mt-4">
+        <div class="card-header">
+            <div class="card-icon preferences">
+                <i class="fas fa-cog"></i>
+            </div>
+            <div class="card-title">
+                <h3>Preferences</h3>
+                <p>Customize your Yeloe experience</p>
+            </div>
+        </div>
+        <div class="card-content">
+            <div class="preferences-grid">
+                <div class="preference-item">
+                    <div class="preference-info">
+                        <h4>Email Notifications</h4>
+                        <p>Receive updates about your tasks and projects</p>
+                    </div>
+                    <div class="toggle-switch">
+                        <input type="checkbox" id="emailNotifications" checked>
+                        <label for="emailNotifications"></label>
+                    </div>
+                </div>
+                <div class="preference-item">
+                    <div class="preference-info">
+                        <h4>Task Reminders</h4>
+                        <p>Get reminded about upcoming deadlines</p>
+                    </div>
+                    <div class="toggle-switch">
+                        <input type="checkbox" id="taskReminders" checked>
+                        <label for="taskReminders"></label>
+                    </div>
+                </div>
+                <div class="preference-item">
+                    <div class="preference-info">
+                        <h4>Weekly Summary</h4>
+                        <p>Receive a weekly summary of your productivity</p>
+                    </div>
+                    <div class="toggle-switch">
+                        <input type="checkbox" id="weeklySummary">
+                        <label for="weeklySummary"></label>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>

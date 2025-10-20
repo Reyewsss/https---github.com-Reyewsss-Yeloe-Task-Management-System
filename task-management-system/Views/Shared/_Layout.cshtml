@@ -1,0 +1,145 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Yeloe @ViewData["Title"]</title>
+    <link rel="icon" href="~/images/icon/yeloe-icon.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/task_management_system.styles.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/lib/fontawesome/css/all.css" />
+    <link rel="stylesheet" href="~/css/font.css" asp-append-version="true" />
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="~/css/header-footer-css/layout.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/loader-css/loader.css" asp-append-version="true" />
+</head>
+<body>
+   
+    <!-- Loader -->
+    <div class="loader-container" id="loader"
+         data-redirect-enabled="false"
+         data-redirect-url="/"
+         data-min-time="1500">
+        <div class="loader-wrapper">
+            <div class="logo-container">
+                <img src="~/images/logo/yeloe-logo.png" alt="Yoloe Logo" class="logo">
+            </div>
+        </div>
+    </div>
+
+    <!-- Header Section -->
+    <header>
+        <nav class="navbar navbar-expand-lg navbar-light fixed-top shadow">
+            <div class="container-fluid px-lg-4 px-3">
+                <a class="navbar-brand" href="#hero">
+                    <img src="/images/logo/yeloe-brand-text.png" alt="Yoloe Logo" class="navbar-logo">
+                </a>
+                <!-- Mobile Elements -->
+                <div class="mobile-get-started d-lg-none">
+                    <a asp-controller="Auth" asp-action="Register" class="btn unique-primary-btn btn-sm">
+                        Get Started
+                    </a>
+                </div>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" 
+                        aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="collapse navbar-collapse" id="navbarNav">
+                    <!-- Mobile Navigation Links -->
+                    <ul class="navbar-nav d-lg-none mobile-nav-menu">
+                        <li class="nav-item">
+                            <a class="nav-link" href="#hero">Home</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#features">Features</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#about">About</a>
+                        </li>
+                        <li class="nav-item mt-3">
+                            <a asp-controller="Auth" asp-action="Register" class="btn unique-primary-btn w-100">
+                                Get Started
+                            </a>
+                        </li>
+                    </ul>
+                    <!-- Desktop Navigation Links -->
+                    <ul class="navbar-nav mx-auto d-none d-lg-flex">
+                        <li class="nav-item">
+                            <a class="nav-link" href="#hero">Home</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#features">Features</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#about">About</a>
+                        </li>
+                    </ul>
+                    <div class="navbar-nav d-none d-lg-block">
+                        <form asp-controller="Home" asp-action="RedirectToRegister" method="post" class="d-inline">
+                            <button type="submit" class="btn unique-primary-btn" id="get-started-btn">
+                                Get Started
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <!-- Main Content Area -->
+    <main role="main">
+        @RenderBody()
+    </main>
+
+    <!-- Footer Section -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-main">
+                <div class="row">
+                    <!-- Column 1 -->
+                    <div class="col-md-4 mb-4 mb-md-0">
+                        <a class="footer-brand" href="#">
+                            <img src="~/images/logo/yeloe-brand-text.png" alt="Yoloe Logo" class="footer-logo">
+                        </a>
+                        <p class="footer-description">Transforming how teams work together with intelligent task management solutions that boost productivity and streamline collaboration.</p>
+                    </div>
+                    <!-- Column 2 -->
+                    <div class="col-md-3 mb-4 mb-md-0 quick-links-col">
+                    <h5 class="footer-title">Quick Links</h5>
+                    <ul class="footer-links">
+                        <li><a href="#hero"><i class="fas fa-chevron-right"></i> Home</a></li>
+                        <li><a href="#features"><i class="fas fa-chevron-right"></i> Features</a></li>
+                        <li><a href="#about"><i class="fas fa-chevron-right"></i> About</a></li>
+                    </ul>
+                </div>
+                    <!-- Column 3: Newsletter -->
+                    <div class="col-md-4">
+                        <h5 class="footer-title">Stay Updated</h5>
+                        <p class="footer-newsletter-text">Subscribe to our newsletter for the latest updates</p>
+                        <form class="newsletter-form" id="newsletterForm">
+                            <input type="email" class="newsletter-input" name="email" placeholder="Your email address" required>
+                            <button type="submit" class="newsletter-button">
+                                <i class="fas fa-paper-plane"></i>
+                            </button>
+                        </form>
+                        <div id="newsletter-message" class="mt-2" style="display: none;"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>© 2023 Yeloe. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Custom Script -->
+    <script src="~/js/loader-js/loader.js" asp-append-version="true"></script>
+    <script src="~/js/homepage-js/scroll-animations.js" asp-append-version="true"></script>
+    <script src="~/js/homepage-js/newsletter-form.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

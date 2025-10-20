@@ -1,0 +1,184 @@
+@model task_management_system.Models.AddTask
+
+@{
+    ViewData["Title"] = $"{Model.Title} - Task Details";
+    Layout = "_DashboardLayout";
+}
+
+<link rel="stylesheet" href="~/css/webpages-css/task-dashboard.css" asp-append-version="true" />
+
+<!-- Task Dashboard Header -->
+<div class="dashboard-header">
+    <div class="header-left">
+        <a href="@Url.Action("Index", "Task")" class="back-link">
+            <i class="fas fa-arrow-left"></i> Back to Tasks
+        </a>
+        <h1><i class="fas fa-tasks"></i> @Model.Title</h1>
+        <span class="task-status-badge @Model.Status.ToString().ToLower()">@Model.Status</span>
+    </div>
+    <div class="header-right">
+        <span class="task-priority-badge @Model.Priority.ToString().ToLower()">@Model.Priority Priority</span>
+        @if (Model.DueDate.HasValue)
+        {
+            <span class="task-due-badge">
+                <i class="fas fa-calendar"></i> Due: @Model.DueDate.Value.ToString("MMM dd, yyyy")
+            </span>
+        }
+    </div>
+</div>
+
+<!-- Main Content -->
+<div class="task-dashboard-container">
+    <!-- Left Side - Task Details & Comments -->
+    <div class="task-main-content">
+        <!-- Task Information Card -->
+        <div class="task-info-card">
+            <div class="card-header">
+                <h3><i class="fas fa-info-circle"></i> Task Information</h3>
+            </div>
+            <div class="card-content">
+                <div class="info-row">
+                    <label>Task Name:</label>
+                    <div class="info-value">@Model.Title</div>
+                </div>
+                <div class="info-row">
+                    <label>Description:</label>
+                    <div class="info-value">@(Model.Description ?? "No description provided")</div>
+                </div>
+                <div class="info-row">
+                    <label>Due Date:</label>
+                    <div class="info-value">
+                        @if (Model.DueDate.HasValue)
+                        {
+                            @Model.DueDate.Value.ToString("MMMM dd, yyyy")
+                        }
+                        else
+                        {
+                            <span class="text-muted">No due date</span>
+                        }
+                    </div>
+                </div>
+                <div class="info-row">
+                    <label>Project:</label>
+                    <div class="info-value">@(Model.Project ?? "No project assigned")</div>
+                </div>
+                <div class="info-row">
+                    <label>Priority:</label>
+                    <div class="info-value">
+                        <span class="priority-badge @Model.Priority.ToString().ToLower()">@Model.Priority</span>
+                    </div>
+                </div>
+                <div class="info-row">
+                    <label>Status:</label>
+                    <div class="info-value">
+                        <span class="status-badge @Model.Status.ToString().ToLower()">@Model.Status</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Comments Section -->
+        <div class="comments-card mb-4">
+            <div class="card-header">
+                <h3><i class="fas fa-comments"></i> Comments</h3>
+                <span class="comment-count" id="commentCount">0</span>
+            </div>
+            <div class="card-content">
+                <!-- Comments List -->
+                <div class="comments-list" id="commentsList">
+                    <!-- Comments will be loaded here -->
+                    <div class="empty-comments">
+                        <i class="fas fa-comment-slash"></i>
+                        <p>No comments yet. Be the first to add one!</p>
+                    </div>
+                </div>
+
+                <!-- Add Comment Form -->
+                <div class="add-comment-form">
+                    <div class="form-group">
+                        <textarea id="commentText" class="form-control" rows="3" 
+                                  placeholder="Write a comment..."></textarea>
+                    </div>
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-primary" onclick="addComment()">
+                            <i class="fas fa-paper-plane"></i>
+                            Post Comment
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Side - Add Work Section -->
+    <div class="task-sidebar mb-4">
+        <div class="work-card">
+            <div class="card-header">
+                <h3><i class="fas fa-briefcase"></i> Add Work</h3>
+            </div>
+            <div class="card-content">
+                <form id="addWorkForm">
+                    <div class="form-group">
+                        <label for="workDescription">Work Description</label>
+                        <textarea id="workDescription" class="form-control" rows="4" 
+                                  placeholder="Describe the work done..."></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="workFile">
+                            <i class="fas fa-paperclip"></i> Attach File
+                        </label>
+                        <div class="file-upload-wrapper">
+                            <input type="file" id="workFile" class="file-input" 
+                                   accept="*/*" onchange="handleFileSelect(event)">
+                            <label for="workFile" class="file-upload-label">
+                                <i class="fas fa-cloud-upload-alt"></i>
+                                <span id="fileLabel">Choose a file or drag & drop</span>
+                            </label>
+                            <div id="filePreview" class="file-preview" style="display: none;">
+                                <div class="file-info">
+                                    <i class="fas fa-file"></i>
+                                    <div class="file-details">
+                                        <span class="file-name" id="fileName"></span>
+                                        <span class="file-size" id="fileSize"></span>
+                                    </div>
+                                    <button type="button" class="remove-file" onclick="removeFile()">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <button type="button" class="btn btn-primary btn-block" onclick="submitWork()">
+                        <i class="fas fa-check"></i>
+                        Submit Work
+                    </button>
+                </form>
+
+                <!-- Work Log -->
+                <div class="work-log">
+                    <h4><i class="fas fa-history"></i> Work Log</h4>
+                    <div id="workLogList" class="work-log-list">
+                        <!-- Work log items will be loaded here -->
+                        <div class="empty-work-log">
+                            <i class="fas fa-clipboard-list"></i>
+                            <p>No work logged yet</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        window.taskData = {
+            taskId: '@Model.Id',
+            addCommentUrl: '@Url.Action("AddComment", "Task")',
+            getCommentsUrl: '@Url.Action("GetComments", "Task")',
+            addWorkUrl: '@Url.Action("AddWork", "Task")',
+            getWorkUrl: '@Url.Action("GetWork", "Task")'
+        };
+    </script>
+    <script src="~/js/webpages-js/task-dashboard.js" asp-append-version="true"></script>
+}

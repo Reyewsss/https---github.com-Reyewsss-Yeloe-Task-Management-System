@@ -1,0 +1,63 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Yeloe</title>
+    <link rel="icon" href="~/images/icon/yeloe-icon.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/lib/fontawesome/css/all.css" />
+    <link rel="stylesheet" href="~/css/font.css" asp-append-version="true" />
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="~/css/auth/auth.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/loader-css/loader.css" asp-append-version="true" />
+</head>
+<body class="auth-body">
+
+    <!-- Loader -->
+    <div class="loader-container" id="loader"
+         data-redirect-enabled="false"
+         data-redirect-url="/"
+         data-min-time="1500">
+        <div class="loader-wrapper">
+            <div class="logo-container">
+                <img src="~/images/logo/yeloe-logo.png" alt="Yoloe Logo" class="logo">
+            </div>
+        </div>
+    </div>
+
+    <!-- Floating Icons -->
+    <div class="task-icons">
+        <i class="fas fa-tasks floating-icon"></i>
+        <i class="fas fa-calendar-check floating-icon"></i>
+        <i class="fas fa-project-diagram floating-icon"></i>
+        <i class="fas fa-users floating-icon"></i>
+        <i class="fas fa-chart-line floating-icon"></i>
+        <i class="fas fa-clock floating-icon"></i>
+    </div>
+
+    <div class="auth-container">
+        <!-- Left Content Section -->
+        <div class="auth-left">
+            <div class="auth-content">
+                <h1>@ViewData["MainTitle"]</h1>
+                <p class="auth-tagline">@ViewData["Tagline"]</p>
+            </div>
+        </div>
+        <!-- Right Form Section -->
+        <div class="auth-right">
+            <div class="auth-card">
+                @RenderBody()
+            </div>
+        </div>
+    </div>
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Custom Script -->
+    <script src="~/js/loader-js/loader.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

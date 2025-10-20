@@ -1,0 +1,181 @@
+﻿/* ----------------- About Section ----------------- */
+
+.about-section {
+    padding: 120px 0;
+    background-color: var(--yoloe-light);
+    position: relative;
+}
+
+.about-image {
+    position: relative;
+    padding-right: 30px;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.icon-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    grid-template-rows: repeat(3, 1fr);
+    gap: 20px;
+    width: 100%;
+    max-width: 450px;
+    position: relative;
+}
+
+.icon-box {
+    aspect-ratio: 1;
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #fff;
+    box-shadow: 0 10px 30px rgba(106, 64, 24, 0.1);
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+    border: 1px solid var(--gray-medium);
+}
+
+    .icon-box:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 15px 35px rgba(106, 64, 24, 0.15);
+        border-color: var(--accent-color);
+    }
+
+    .icon-box i {
+        font-size: 2rem;
+        color: var(--primary-color);
+        transition: all 0.3s ease;
+    }
+
+    .icon-box:hover i {
+        transform: scale(1.2);
+    }
+
+    .icon-box.primary {
+        background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+    }
+
+        .icon-box.primary i {
+            color: white;
+        }
+
+    .icon-box.accent {
+        background-color: var(--accent-color);
+    }
+
+    .icon-box.large {
+        grid-row: span 2;
+        grid-column: span 2;
+    }
+
+.experience-badge {
+    position: absolute;
+    bottom: 30px;
+    right: 0;
+    background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+    color: white;
+    border-radius: 15px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    box-shadow: 0 10px 25px rgba(106, 64, 24, 0.25);
+    z-index: 2;
+}
+
+    .experience-badge .years {
+        font-size: 2.5rem;
+        font-weight: 800;
+        line-height: 1;
+        margin-bottom: 5px;
+    }
+
+    .experience-badge .text {
+        font-size: 0.9rem;
+        text-align: center;
+        font-weight: 500;
+    }
+
+.about-content {
+    padding-left: 30px;
+}
+
+    .about-content h2 {
+        font-size: 2.8rem;
+        font-weight: 800;
+        margin-bottom: 20px;
+        line-height: 1.2;
+    }
+
+    .about-content .lead {
+        font-size: 1.25rem;
+        font-weight: 500;
+        margin-bottom: 20px;
+        color: #555;
+    }
+
+    .about-content p {
+        margin-bottom: 25px;
+        color: #666;
+        font-size: 1rem;
+        line-height: 1.7;
+    }
+
+.stats-row {
+    display: flex;
+    justify-content: space-between;
+    margin: 40px 0;
+    flex-wrap: wrap;
+}
+
+.stat-item {
+    display: flex;
+    flex-direction: column;
+    margin-right: 20px;
+    margin-bottom: 20px;
+}
+
+.stat-number {
+    font-size: 2.2rem;
+    font-weight: 800;
+    color: var(--primary-color);
+    line-height: 1;
+}
+
+.stat-label {
+    font-size: 0.9rem;
+    color: #666;
+    margin-top: 5px;
+}
+
+.about-btn {
+    display: inline-flex;
+    align-items: center;
+    background-color: var(--primary-color);
+    color: white;
+    padding: 14px 30px;
+    border-radius: 12px;
+    text-decoration: none;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    gap: 10px;
+}
+
+    .about-btn:hover {
+        background-color: var(--primary-dark);
+        transform: translateY(-3px);
+        box-shadow: 0 10px 20px rgba(106, 64, 24, 0.2);
+        color: white;
+    }
+
+    .about-btn i {
+        transition: transform 0.3s ease;
+    }
+
+    .about-btn:hover i {
+        transform: translateX(5px);
+    }

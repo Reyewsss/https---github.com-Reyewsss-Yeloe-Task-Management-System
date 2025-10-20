@@ -1,0 +1,96 @@
+.loader-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: white;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+}
+
+.loader-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 300px;
+    height: 100px;
+}
+
+.logo-container {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 2;
+    animation: logoJump 1s ease infinite;
+}
+
+.logo {
+    width: 120px;
+    height: auto;
+    filter: drop-shadow(0 4px 6px rgba(106, 64, 24, 0.2));
+}
+
+/* Loading text */
+.loading-text {
+    position: absolute;
+    bottom: -40px;
+    left: 50%;
+    transform: translateX(-50%);
+    color: var(--yoloe-brown);
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    animation: pulse 1.5s ease-in-out infinite;
+}
+
+/* Animations */
+@keyframes logoJump {
+    0%, 100% {
+        transform: translateX(-50%) translateY(0);
+    }
+    50% {
+        transform: translateX(-50%) translateY(-15px);
+    }
+}
+
+@keyframes logoExit {
+    100% {
+        opacity: 0;
+        transform: translateX(-50%) scale(1.5);
+    }
+}
+
+/* When body has loaded class, hide the loader */
+body.loaded .loader-container {
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.8s ease-out;
+}
+
+body.loaded .logo-container {
+    animation: logoExit 0.8s ease-out forwards;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .loader-wrapper {
+        width: 250px;
+    }
+
+    .logo {
+        width: 100px;
+    }
+
+    @keyframes logoJump {
+        0%, 100% {
+            transform: translateX(-50%) translateY(0);
+        }
+        50% {
+            transform: translateX(-50%) translateY(-10px);
+        }
+    }
+}

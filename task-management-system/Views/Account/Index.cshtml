@@ -1,0 +1,232 @@
+@model task_management_system.Models.User
+@{
+    ViewData["Title"] = "Account";
+    Layout = "_DashboardLayout";
+}
+
+<link rel="stylesheet" href="~/css/webpages-css/account-page.css" asp-append-version="true" />
+
+    <!-- Profile Section -->
+    <div class="account-card mt-4">
+        <div class="card-content">.
+            <div class="profile-avatar">
+                <div class="avatar-circle">
+                    <i class="fas fa-user"></i>
+                </div>
+                <div class="avatar-info">
+                    <h4>@(Model?.FirstName ?? "User") @(Model?.LastName ?? "")</h4>
+                    <p>@(Model?.Email ?? ViewBag.UserEmail ?? "No email")</p>
+                    <span class="status-badge @(Model?.IsEmailVerified == true ? "verified" : "unverified")">
+                        <i class="fas @(Model?.IsEmailVerified == true ? "fa-check-circle" : "fa-exclamation-circle")"></i>
+                        @(Model?.IsEmailVerified == true ? "Verified" : "Unverified")
+                    </span>
+                </div>
+            </div>
+            
+            <div class="profile-details">
+                <div class="detail-group">
+                    <div class="detail-item">
+                        <label>First Name</label>
+                        <div class="detail-value">@(Model?.FirstName ?? "Not set")</div>
+                    </div>
+                    <div class="detail-item">
+                        <label>Last Name</label>
+                        <div class="detail-value">@(Model?.LastName ?? "Not set")</div>
+                    </div>
+                </div>
+                <div class="detail-group">
+                    <div class="detail-item">
+                        <label>Email Address</label>
+                        <div class="detail-value">@(Model?.Email ?? "Not set")</div>
+                    </div>
+                    <div class="detail-item">
+                        <label>Member Since</label>
+                        <div class="detail-value">@(Model?.CreatedAt.ToString("MMMM dd, yyyy") ?? "Unknown")</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card-actions">
+                <button class="btn btn-primary" onclick="showEditProfileModal()">
+                    <i class="fas fa-edit"></i>
+                    Edit Profile
+                </button>
+                <button class="btn btn-outline" onclick="showChangePasswordModal()">
+                    <i class="fas fa-key"></i>
+                    Change Password
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Profile Modal -->
+    <div class="modal-overlay" id="editProfileModalOverlay">
+        <div class="modal-container">
+            <div class="modal-header">
+                <h3>Edit Profile</h3>
+                <button class="modal-close" onclick="closeEditProfileModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <form id="editProfileForm" class="modal-body">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="editFirstName">First Name</label>
+                        <input type="text" id="editFirstName" name="FirstName" class="form-control" value="@(Model?.FirstName ?? "")" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="editLastName">Last Name</label>
+                        <input type="text" id="editLastName" name="LastName" class="form-control" value="@(Model?.LastName ?? "")" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="editEmail">Email Address</label>
+                    <input type="email" id="editEmail" name="Email" class="form-control" value="@(Model?.Email ?? "")" required>
+                </div>
+            </form>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline" onclick="closeEditProfileModal()">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="updateProfile()">
+                    <i class="fas fa-save"></i>
+                    Save Changes
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Change Password Modal -->
+    <div class="modal-overlay" id="changePasswordModalOverlay">
+        <div class="modal-container">
+            <div class="modal-header">
+                <h3>Change Password</h3>
+                <button class="modal-close" onclick="closeChangePasswordModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <form id="changePasswordForm" class="modal-body">
+                <div class="form-group">
+                    <label for="currentPassword">Current Password</label>
+                    <div class="password-input">
+                        <input type="password" id="currentPassword" name="CurrentPassword" class="form-control" required>
+                        <button type="button" class="password-toggle" onclick="togglePasswordVisibility('currentPassword')">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="newPassword">New Password</label>
+                    <div class="password-input">
+                        <input type="password" id="newPassword" name="NewPassword" class="form-control" required>
+                        <button type="button" class="password-toggle" onclick="togglePasswordVisibility('newPassword')">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </div>
+                    <small class="form-text">Password must be at least 8 characters with uppercase, lowercase, number, and special character.</small>
+                </div>
+                <div class="form-group">
+                    <label for="confirmPassword">Confirm New Password</label>
+                    <div class="password-input">
+                        <input type="password" id="confirmPassword" name="ConfirmPassword" class="form-control" required>
+                        <button type="button" class="password-toggle" onclick="togglePasswordVisibility('confirmPassword')">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </div>
+                </div>
+            </form>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline" onclick="closeChangePasswordModal()">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="updatePassword()">
+                    <i class="fas fa-key"></i>
+                    Update Password
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Security Section -->
+    <div class="account-card mt-4">
+        <div class="card-header">
+            <div class="card-icon security">
+                <i class="fas fa-shield-alt"></i>
+            </div>
+            <div class="card-title">
+                <h3>Security & Privacy</h3>
+                <p>Manage your account security and privacy settings</p>
+            </div>
+        </div>
+        <div class="card-content">
+            <div class="security-items">
+                <div class="security-item">
+                    <div class="security-info">
+                        <h4>Password</h4>
+                        <p>Last changed: Recently</p>
+                    </div>
+                    <button class="btn btn-sm btn-outline" onclick="changePassword()">
+                        <i class="fas fa-key"></i>
+                        Change
+                    </button>
+                </div>
+                <div class="security-item">
+                    <div class="security-info">
+                        <h4>Email Verification</h4>
+                        <p>Status: @(Model?.IsEmailVerified == true ? "Verified" : "Not Verified")</p>
+                    </div>
+                    @if (Model?.IsEmailVerified != true)
+                    {
+                        <button class="btn btn-sm btn-primary" onclick="resendVerification()">
+                            <i class="fas fa-envelope"></i>
+                            Verify
+                        </button>
+                    }
+                    else
+                    {
+                        <span class="verified-badge">
+                            <i class="fas fa-check-circle"></i>
+                            Verified
+                        </span>
+                    }
+                </div>
+                <div class="security-item">
+                    <div class="security-info">
+                        <h4>Account Activity</h4>
+                        <p>Monitor your recent account activity</p>
+                    </div>
+                    <button class="btn btn-sm btn-outline" onclick="viewActivity()">
+                        <i class="fas fa-history"></i>
+                        View Activity
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Danger Zone -->
+    <div class="account-card danger-zone mt-4 mb-4">
+        <div class="card-header">
+            <div class="card-icon danger">
+                <i class="fas fa-exclamation-triangle"></i>
+            </div>
+            <div class="card-title">
+                <h3>Danger Zone</h3>
+                <p>Irreversible Actions</p>
+            </div>
+        </div>
+        <div class="card-content">
+            <div class="danger-actions">
+                <div class="danger-item">
+                    <div class="danger-info">
+                        <h4>Delete Account</h4>
+                        <p>Permanently delete your account and all associated data. This action cannot be undone.</p>
+                    </div>
+                    <button class="btn btn-danger" onclick="deleteAccount()">
+                        <i class="fas fa-trash"></i>
+                        Delete Account
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+@section Scripts {
+    <script src="~/js/webpages-js/account-page.js" asp-append-version="true"></script>
+}

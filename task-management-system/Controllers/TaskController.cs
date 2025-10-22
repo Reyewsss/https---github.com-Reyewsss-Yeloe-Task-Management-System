@@ -1,6 +1,9 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using task_management_system.Models.ViewModels;
 using task_management_system.Services;
+using task_management_system.Models;
+using task_management_system.Data;
+using MongoDB.Driver;
 
 namespace task_management_system.Controllers
 {
@@ -9,12 +12,18 @@ namespace task_management_system.Controllers
         private readonly ITaskService _taskService;
         private readonly IProjectService _projectService;
         private readonly IUserSessionService _userSessionService;
+        private readonly MongoDbContext _context;
 
-        public TaskController(ITaskService taskService, IProjectService projectService, IUserSessionService userSessionService)
+        public TaskController(
+            ITaskService taskService, 
+            IProjectService projectService, 
+            IUserSessionService userSessionService,
+            MongoDbContext context)
         {
             _taskService = taskService;
             _projectService = projectService;
             _userSessionService = userSessionService;
+            _context = context;
         }
 
         [HttpGet]
@@ -85,14 +94,36 @@ namespace task_management_system.Controllers
                     return Json(new { success = false, message = "User not authenticated" });
                 }
 
-                if (string.IsNullOrEmpty(request.Comment))
+                var userId = _userSessionService.GetCurrentUserId();
+                var userName = _userSessionService.GetCurrentUserName();
+
+                if (string.IsNullOrEmpty(request.Comment) || string.IsNullOrEmpty(request.TaskId))
                 {
-                    return Json(new { success = false, message = "Comment cannot be empty" });
+                    return Json(new { success = false, message = "Comment and task ID are required" });
                 }
 
-                // For now, we'll store comments in session or you can create a Comment model
-                // This is a simplified implementation
-                return Json(new { success = true, message = "Comment added successfully!" });
+                var comment = new Comment
+                {
+                    TaskId = request.TaskId,
+                    UserId = userId ?? string.Empty,
+                    UserName = userName ?? "Unknown User",
+                    Text = request.Comment,
+                    CreatedAt = DateTime.UtcNow
+                };
+
+                await _context.Comments.InsertOneAsync(comment);
+
+                return Json(new { 
+                    success = true, 
+                    message = "Comment added successfully!",
+                    comment = new {
+                        id = comment.Id,
+                        userName = comment.UserName,
+                        text = comment.Text,
+                        createdAt = comment.CreatedAt,
+                        timeAgo = GetTimeAgo(comment.CreatedAt)
+                    }
+                });
             }
             catch (Exception ex)
             {
@@ -110,11 +141,25 @@ namespace task_management_system.Controllers
                     return Json(new { success = false, message = "User not authenticated" });
                 }
 
-                // For now, returning empty comments array
-                // You can implement a proper Comment model and service later
-                var comments = new List<object>();
+                if (string.IsNullOrEmpty(taskId))
+                {
+                    return Json(new { success = false, message = "Task ID is required" });
+                }
+
+                var comments = await _context.Comments
+                    .Find(c => c.TaskId == taskId)
+                    .SortByDescending(c => c.CreatedAt)
+                    .ToListAsync();
+
+                var commentsData = comments.Select(c => new {
+                    id = c.Id,
+                    userName = c.UserName,
+                    text = c.Text,
+                    createdAt = c.CreatedAt,
+                    timeAgo = GetTimeAgo(c.CreatedAt)
+                }).ToList();
                 
-                return Json(new { success = true, comments });
+                return Json(new { success = true, comments = commentsData });
             }
             catch (Exception ex)
             {
@@ -132,13 +177,17 @@ namespace task_management_system.Controllers
                     return Json(new { success = false, message = "User not authenticated" });
                 }
 
-                if (string.IsNullOrEmpty(description))
+                var userId = _userSessionService.GetCurrentUserId();
+                var userName = _userSessionService.GetCurrentUserName();
+
+                if (string.IsNullOrEmpty(description) || string.IsNullOrEmpty(taskId))
                 {
-                    return Json(new { success = false, message = "Work description cannot be empty" });
+                    return Json(new { success = false, message = "Work description and task ID are required" });
                 }
 
                 string? fileName = null;
-                string? filePath = null;
+                string? fileUrl = null;
+                long? fileSize = null;
 
                 // Handle file upload
                 if (file != null && file.Length > 0)
@@ -148,23 +197,47 @@ namespace task_management_system.Controllers
                     Directory.CreateDirectory(uploadsFolder);
 
                     // Generate unique file name
-                    fileName = $"{Guid.NewGuid()}_{file.FileName}";
-                    filePath = Path.Combine(uploadsFolder, fileName);
+                    var uniqueFileName = $"{Guid.NewGuid()}_{file.FileName}";
+                    var filePath = Path.Combine(uploadsFolder, uniqueFileName);
 
                     // Save file
                     using (var stream = new FileStream(filePath, FileMode.Create))
                     {
                         await file.CopyToAsync(stream);
                     }
+
+                    fileName = file.FileName;
+                    fileUrl = $"/uploads/work/{uniqueFileName}";
+                    fileSize = file.Length;
                 }
 
-                // For now, this is a simplified implementation
-                // You can create a WorkLog model and service later to save to database
+                var workLog = new WorkLog
+                {
+                    TaskId = taskId,
+                    UserId = userId ?? string.Empty,
+                    UserName = userName ?? "Unknown User",
+                    Description = description,
+                    FileName = fileName,
+                    FileUrl = fileUrl,
+                    FileSize = fileSize,
+                    CreatedAt = DateTime.UtcNow
+                };
+
+                await _context.WorkLogs.InsertOneAsync(workLog);
+
                 return Json(new { 
                     success = true, 
                     message = "Work submitted successfully!",
-                    fileName = file?.FileName,
-                    fileUrl = fileName != null ? $"/uploads/work/{fileName}" : null
+                    workLog = new {
+                        id = workLog.Id,
+                        userName = workLog.UserName,
+                        description = workLog.Description,
+                        fileName = workLog.FileName,
+                        fileUrl = workLog.FileUrl,
+                        fileSize = workLog.FileSize,
+                        createdAt = workLog.CreatedAt,
+                        timeAgo = GetTimeAgo(workLog.CreatedAt)
+                    }
                 });
             }
             catch (Exception ex)
@@ -183,11 +256,28 @@ namespace task_management_system.Controllers
                     return Json(new { success = false, message = "User not authenticated" });
                 }
 
-                // For now, returning empty work log array
-                // You can implement a proper WorkLog model and service later
-                var workLog = new List<object>();
+                if (string.IsNullOrEmpty(taskId))
+                {
+                    return Json(new { success = false, message = "Task ID is required" });
+                }
+
+                var workLogs = await _context.WorkLogs
+                    .Find(w => w.TaskId == taskId)
+                    .SortByDescending(w => w.CreatedAt)
+                    .ToListAsync();
+
+                var workLogsData = workLogs.Select(w => new {
+                    id = w.Id,
+                    userName = w.UserName,
+                    description = w.Description,
+                    fileName = w.FileName,
+                    fileUrl = w.FileUrl,
+                    fileSize = w.FileSize,
+                    createdAt = w.CreatedAt,
+                    timeAgo = GetTimeAgo(w.CreatedAt)
+                }).ToList();
                 
-                return Json(new { success = true, workLog });
+                return Json(new { success = true, workLog = workLogsData });
             }
             catch (Exception ex)
             {
@@ -465,6 +555,27 @@ namespace task_management_system.Controllers
             {
                 return Json(new { success = false, message = $"Error deleting task: {ex.Message}" });
             }
+        }
+
+        // Helper method for time formatting
+        private string GetTimeAgo(DateTime dateTime)
+        {
+            var timeSpan = DateTime.UtcNow - dateTime;
+
+            if (timeSpan.TotalMinutes < 1)
+                return "Just now";
+            if (timeSpan.TotalMinutes < 60)
+                return $"{(int)timeSpan.TotalMinutes} minute{((int)timeSpan.TotalMinutes != 1 ? "s" : "")} ago";
+            if (timeSpan.TotalHours < 24)
+                return $"{(int)timeSpan.TotalHours} hour{((int)timeSpan.TotalHours != 1 ? "s" : "")} ago";
+            if (timeSpan.TotalDays < 7)
+                return $"{(int)timeSpan.TotalDays} day{((int)timeSpan.TotalDays != 1 ? "s" : "")} ago";
+            if (timeSpan.TotalDays < 30)
+                return $"{(int)(timeSpan.TotalDays / 7)} week{((int)(timeSpan.TotalDays / 7) != 1 ? "s" : "")} ago";
+            if (timeSpan.TotalDays < 365)
+                return $"{(int)(timeSpan.TotalDays / 30)} month{((int)(timeSpan.TotalDays / 30) != 1 ? "s" : "")} ago";
+            
+            return $"{(int)(timeSpan.TotalDays / 365)} year{((int)(timeSpan.TotalDays / 365) != 1 ? "s" : "")} ago";
         }
 
         // Helper class for task actions

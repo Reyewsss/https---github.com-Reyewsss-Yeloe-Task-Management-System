@@ -9,12 +9,18 @@ namespace task_management_system.Services
         private readonly MongoDbContext _context;
         private readonly INotificationService _notificationService;
         private readonly IEmailService _emailService;
+        private readonly IConfiguration _configuration;
 
-        public ProjectInvitationService(MongoDbContext context, INotificationService notificationService, IEmailService emailService)
+        public ProjectInvitationService(
+            MongoDbContext context, 
+            INotificationService notificationService, 
+            IEmailService emailService,
+            IConfiguration configuration)
         {
             _context = context;
             _notificationService = notificationService;
             _emailService = emailService;
+            _configuration = configuration;
         }
 
         public async Task<ProjectInvitation> SendInvitationAsync(string projectId, string projectName, string invitedByUserId, string invitedByUserName, string invitedUserEmail)
@@ -87,9 +93,9 @@ namespace task_management_system.Services
         private async Task SendInvitationEmailAsync(ProjectInvitation invitation, string invitedUserName)
         {
             var subject = $"You're invited to join '{invitation.ProjectName}'";
-            // TODO: Replace with your actual domain URL (e.g., https://yourdomain.com)
-            // For development, you can use https://localhost:5001 or your local URL
-            var acceptUrl = $"https://localhost:5001/Projects/Invitation/{invitation.Id}";
+            // Get base URL from configuration
+            var baseUrl = _configuration["AppSettings:BaseUrl"] ?? "https://localhost:7279";
+            var acceptUrl = $"{baseUrl}/Projects/Invitation/{invitation.Id}";
 
             var body = $@"
                 <div style='font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;'>

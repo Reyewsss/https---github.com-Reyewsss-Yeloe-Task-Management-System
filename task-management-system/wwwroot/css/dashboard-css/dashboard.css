@@ -40,6 +40,12 @@
     margin-bottom: 2rem;
 }
 
+.stat-card-link {
+    text-decoration: none;
+    color: inherit;
+    display: block;
+}
+
 .stat-card {
     background: white;
     border-radius: 12px;
@@ -49,11 +55,16 @@
     align-items: center;
     gap: 1.5rem;
     transition: all 0.3s ease;
+    cursor: pointer;
 }
 
 .stat-card:hover, .stat-card.hovered {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+    transform: translateY(-4px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+}
+
+.stat-card-link:hover .stat-number {
+    color: var(--primary-color);
 }
 
 .stat-icon {
@@ -166,6 +177,7 @@
     display: flex;
     gap: 1rem;
     flex-wrap: wrap;
+    justify-content: center;
 }
 
 .legend-item {
@@ -433,6 +445,93 @@
 .fab-actions.active .fab-action:nth-child(2) { transition-delay: 0.1s; }
 .fab-actions.active .fab-action:nth-child(3) { transition-delay: 0.15s; }
 .fab-actions.active .fab-action:nth-child(4) { transition-delay: 0.2s; }
+
+/* Empty State Styles */
+.empty-state-small {
+    text-align: center;
+    padding: 2rem 1rem;
+    color: #999;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.empty-state-small i {
+    font-size: 3rem;
+    color: #ddd;
+    margin-bottom: 1rem;
+    display: block;
+}
+
+.empty-state-small p {
+    margin: 0 0 0.5rem 0;
+    font-size: 1rem;
+    color: #666;
+    font-weight: 500;
+}
+
+.empty-state-small small {
+    font-size: 0.85rem;
+    color: #999;
+    display: block;
+}
+
+/* Clickable Deadline Items */
+.deadline-item-link {
+    text-decoration: none;
+    color: inherit;
+    display: block;
+}
+
+.deadline-item-link:hover .deadline-item {
+    background: rgba(106, 64, 24, 0.05);
+    transform: translateX(4px);
+}
+
+.deadline-item {
+    transition: all 0.2s ease;
+}
+
+.priority-badge-small {
+    display: inline-block;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    margin-top: 0.5rem;
+}
+
+.priority-badge-small.low {
+    background: rgba(76, 175, 80, 0.1);
+    color: #4CAF50;
+}
+
+.priority-badge-small.medium {
+    background: rgba(255, 152, 0, 0.1);
+    color: #FF9800;
+}
+
+.priority-badge-small.high {
+    background: rgba(244, 67, 54, 0.1);
+    color: #F44336;
+}
+
+/* Clickable Agenda Items */
+.agenda-item-link {
+    text-decoration: none;
+    color: inherit;
+    display: block;
+}
+
+.agenda-item-link:hover .agenda-item {
+    background: rgba(106, 64, 24, 0.05);
+}
+
+.agenda-item {
+    transition: all 0.2s ease;
+}
 
 /* Responsive Design */
 @media (max-width: 768px) {

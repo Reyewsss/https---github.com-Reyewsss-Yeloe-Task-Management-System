@@ -150,6 +150,13 @@
             completeUrl: '@Url.Action("Complete", "Task")',
             deleteUrl: '@Url.Action("Delete", "Task")'
         };
+
+        // Get filter from URL parameter
+        const urlParams = new URLSearchParams(window.location.search);
+        const filterParam = urlParams.get('filter');
+        
+        // Set initial filter when page loads
+        window.initialFilter = filterParam || 'all';
     </script>
     <script src="~/js/webpages-js/task-page.js" asp-append-version="true"></script>
 }

@@ -56,9 +56,9 @@ namespace task_management_system.Models
 
     public enum ProjectRole
     {
-        Viewer = 0,      // Can only view and submit
-        Contributor = 1, // Can create and edit (future feature)
-        Admin = 2,       // Can manage members (future feature)
-        Owner = 3        // Full control
+        Viewer = 0,
+        Contributor = 1,
+        Admin = 2,
+        Owner = 3
     }
 }

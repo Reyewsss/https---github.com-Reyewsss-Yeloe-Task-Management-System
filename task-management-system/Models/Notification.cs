@@ -15,7 +15,7 @@ namespace task_management_system.Models
         public string Title { get; set; } = string.Empty;
         public string Message { get; set; } = string.Empty;
         public NotificationType Type { get; set; }
-        public string? Link { get; set; } // Clickable link for the notification
+        public string? Link { get; set; } 
         public bool IsRead { get; set; } = false;
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     }
@@ -27,7 +27,7 @@ namespace task_management_system.Models
         ProjectDeadline,
         TeamMemberJoined,
         SystemUpdate,
-        PasswordReset, // Add this new type
+        PasswordReset, 
         General
     }
 }

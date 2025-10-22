@@ -15,6 +15,11 @@ function initializeTaskPage() {
     // Initialize filter buttons
     initializeFilters();
     
+    // Apply initial filter from URL parameter
+    if (window.initialFilter) {
+        applyInitialFilter(window.initialFilter);
+    }
+    
     // Handle project select change
     if (taskProjectSelect) {
         taskProjectSelect.addEventListener('change', function() {
@@ -79,6 +84,31 @@ function initializeFilters() {
             filterTasks(filter);
         });
     });
+}
+
+function applyInitialFilter(filterParam) {
+    // Map filter parameter to filter button data-filter value
+    const filterMap = {
+        'all': 'all',
+        'completed': 'completed',
+        'inprogress': 'in-progress',
+        'pending': 'pending'
+    };
+    
+    const filter = filterMap[filterParam] || 'all';
+    
+    // Find and activate the correct filter button
+    const filterBtns = document.querySelectorAll('.filter-btn');
+    filterBtns.forEach(btn => {
+        if (btn.getAttribute('data-filter') === filter) {
+            btn.classList.add('active');
+        } else {
+            btn.classList.remove('active');
+        }
+    });
+    
+    // Apply the filter
+    filterTasks(filter);
 }
 
 function filterTasks(filter) {

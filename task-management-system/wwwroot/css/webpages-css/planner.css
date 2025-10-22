@@ -294,12 +294,10 @@
     font-size: 1.5rem;
     color: #666;
     cursor: pointer;
-    transition: var(--transition);
 }
 
 .close-btn:hover {
     color: #333;
-    transform: rotate(90deg);
 }
 
 .event-modal-body,

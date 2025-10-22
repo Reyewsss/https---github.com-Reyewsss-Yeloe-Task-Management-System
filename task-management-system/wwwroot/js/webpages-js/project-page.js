@@ -374,21 +374,31 @@
             btn.find('span').text('Updating...');
 
             const projectId = $('#projectId').val();
-            const formData = {
-                Name: $('#projectName').val(),
-                Description: $('#projectDescription').val(),
-                Status: $('#projectStatus').val(),
-                StartDate: $('#projectStartDate').val() || null,
-                DueDate: $('#projectDueDate').val() || null,
-                Progress: parseInt($('#projectProgress').val()) || 0,
-                Priority: $('#projectPriority').val()
-            };
+            const formData = new FormData();
+            formData.append('Name', $('#projectName').val());
+            formData.append('Description', $('#projectDescription').val());
+            formData.append('Status', $('#projectStatus').val());
+            formData.append('Priority', $('#projectPriority').val());
+            
+            const startDate = $('#projectStartDate').val();
+            const dueDate = $('#projectDueDate').val();
+            if (startDate) formData.append('StartDate', startDate);
+            if (dueDate) formData.append('DueDate', dueDate);
+            formData.append('Progress', parseInt($('#projectProgress').val()) || 0);
+            
+            // Add anti-forgery token
+            const token = $('input[name="__RequestVerificationToken"]').val();
+            if (token) {
+                formData.append('__RequestVerificationToken', token);
+            }
 
             const self = this;
             $.ajax({
-                url: this.config.updateUrl,
+                url: `${this.config.updateUrl}?id=${projectId}`,
                 type: 'POST',
-                data: { id: projectId, ...formData },
+                data: formData,
+                processData: false,
+                contentType: false,
                 success: function (response) {
                     if (response.success) {
                         self.hideProjectModal();
@@ -399,10 +409,13 @@
                     }
                 },
                 error: function (xhr, status, error) {
+                    console.error('Update error:', xhr.responseText);
                     self.showNotification('error', 'Failed to update project. Please try again.');
                 },
                 complete: function () {
-                    self.resetForm();
+                    btn.removeClass('task-modal-btn-loading').prop('disabled', false);
+                    btn.find('i').removeClass('fa-spinner fa-spin').addClass('fa-save');
+                    btn.find('span').text('Save Changes');
                 }
             });
         },

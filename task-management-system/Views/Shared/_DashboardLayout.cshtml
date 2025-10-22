@@ -12,6 +12,10 @@
     <!-- Custom CSS -->
     <link rel="stylesheet" href="~/css/dashboard-css/sidebar.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/loader-css/loader.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/dark-mode.css" asp-append-version="true" />
+
+    <!-- Dark Mode Initialization (must load early) -->
+    <script src="~/js/dark-mode-init.js" asp-append-version="true"></script>
 
 </head>
 <body class="dashboard-body">
@@ -141,7 +145,7 @@
                                 <!-- Updated logout button in dropdown with modal trigger -->
                                 <button class="dropdown-item" id="logoutBtnDropdown">
                                     <i class="fas fa-sign-out-alt"></i>
-                                    Logout
+                                    Sign Out
                                 </button>
                             </div>
                         </div>

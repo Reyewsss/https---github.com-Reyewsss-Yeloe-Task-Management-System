@@ -52,6 +52,79 @@ namespace task_management_system.Controllers
             ViewBag.RecentTasks = recentTasks;
             ViewBag.RecentProjects = recentProjects;
 
+            // Get recent activity (last 10 actions)
+            var recentActivity = new List<object>();
+            
+            // Add recently completed tasks
+            var recentlyCompleted = allUserTasks
+                .Where(t => t.IsCompleted)
+                .OrderByDescending(t => t.UpdatedAt)
+                .Take(3)
+                .Select(t => new
+                {
+                    Type = "TaskCompleted",
+                    Icon = "fa-check",
+                    Text = $"Task \"{t.Title}\" completed",
+                    Time = t.UpdatedAt,
+                    TaskId = t.Id
+                });
+            
+            // Add recently created tasks
+            var recentlyCreated = allUserTasks
+                .OrderByDescending(t => t.CreatedAt)
+                .Take(2)
+                .Select(t => new
+                {
+                    Type = "TaskCreated",
+                    Icon = "fa-plus",
+                    Text = $"Task \"{t.Title}\" created",
+                    Time = t.CreatedAt,
+                    TaskId = t.Id
+                });
+            
+            // Add recently created projects
+            var recentlyCreatedProjects = allUserProjects
+                .OrderByDescending(p => p.CreatedAt)
+                .Take(2)
+                .Select(p => new
+                {
+                    Type = "ProjectCreated",
+                    Icon = "fa-folder-plus",
+                    Text = $"Project \"{p.Name}\" created",
+                    Time = p.CreatedAt,
+                    ProjectId = p.Id
+                });
+            
+            // Combine and sort all activities
+            recentActivity.AddRange(recentlyCompleted);
+            recentActivity.AddRange(recentlyCreated);
+            recentActivity.AddRange(recentlyCreatedProjects);
+            
+            ViewBag.RecentActivity = recentActivity
+                .OrderByDescending(a => ((dynamic)a).Time)
+                .Take(5)
+                .ToList();
+            
+            // Get upcoming deadlines (tasks with due dates in the future)
+            var upcomingDeadlines = allUserTasks
+                .Where(t => t.DueDate.HasValue && t.DueDate.Value >= DateTime.Now && !t.IsCompleted)
+                .OrderBy(t => t.DueDate)
+                .Take(5)
+                .ToList();
+            
+            ViewBag.UpcomingDeadlines = upcomingDeadlines;
+            
+            // Get today's tasks (agenda)
+            var today = DateTime.Today;
+            var todaysTasks = allUserTasks
+                .Where(t => t.DueDate.HasValue && 
+                           t.DueDate.Value.Date == today &&
+                           !t.IsCompleted)
+                .OrderBy(t => t.DueDate)
+                .ToList();
+            
+            ViewBag.TodaysAgenda = todaysTasks;
+
             return View();
         }
 

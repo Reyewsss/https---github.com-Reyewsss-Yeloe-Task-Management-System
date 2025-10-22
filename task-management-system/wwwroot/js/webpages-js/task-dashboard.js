@@ -160,8 +160,11 @@
         const commentsHtml = comments.map(comment => `
             <div class="comment-item">
                 <div class="comment-header">
-                    <span class="comment-author">${escapeHtml(comment.author || 'You')}</span>
-                    <span class="comment-date">${formatDate(comment.date)}</span>
+                    <div class="comment-author-info">
+                        <i class="fas fa-user-circle"></i>
+                        <span class="comment-author">${escapeHtml(comment.userName)}</span>
+                    </div>
+                    <span class="comment-date">${comment.timeAgo}</span>
                 </div>
                 <div class="comment-text">${escapeHtml(comment.text)}</div>
             </div>
@@ -242,12 +245,20 @@
         const workLogHtml = workLog.map(work => `
             <div class="work-log-item">
                 <div class="work-log-header">
-                    <span class="work-log-date">${formatDate(work.date)}</span>
+                    <div class="work-log-author">
+                        <i class="fas fa-user-circle"></i>
+                        <span>${escapeHtml(work.userName)}</span>
+                    </div>
+                    <span class="work-log-date">${work.timeAgo}</span>
                 </div>
                 <div class="work-log-description">${escapeHtml(work.description)}</div>
                 ${work.fileName ? `
                     <div class="work-log-attachment">
-                        ${renderFilePreview(work.fileName, work.fileUrl)}
+                        <a href="${work.fileUrl}" target="_blank" class="attachment-link">
+                            <i class="fas fa-file"></i>
+                            <span class="attachment-name">${escapeHtml(work.fileName)}</span>
+                            ${work.fileSize ? `<span class="attachment-size">(${formatFileSize(work.fileSize)})</span>` : ''}
+                        </a>
                     </div>
                 ` : ''}
             </div>

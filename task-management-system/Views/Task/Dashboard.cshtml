@@ -10,9 +10,6 @@
 <!-- Task Dashboard Header -->
 <div class="dashboard-header">
     <div class="header-left">
-        <a href="@Url.Action("Index", "Task")" class="back-link">
-            <i class="fas fa-arrow-left"></i> Back to Tasks
-        </a>
         <h1><i class="fas fa-tasks"></i> @Model.Title</h1>
         <span class="task-status-badge @Model.Status.ToString().ToLower()">@Model.Status</span>
     </div>
@@ -38,7 +35,7 @@
             </div>
             <div class="card-content">
                 <div class="info-row">
-                    <label>Task Name:</label>
+                    <label>Name:</label>
                     <div class="info-value">@Model.Title</div>
                 </div>
                 <div class="info-row">

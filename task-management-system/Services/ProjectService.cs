@@ -46,20 +46,60 @@ namespace task_management_system.Services
 
         public async Task<List<Project>> GetUserProjectsAsync(string userId)
         {
-            var filter = Builders<Project>.Filter.Eq(p => p.UserId, userId);
-            var projects = await _context.Projects.Find(filter)
-                .SortByDescending(p => p.CreatedAt)
+            // Get projects created by the user
+            var ownedProjects = await _context.Projects
+                .Find(p => p.UserId == userId)
                 .ToListAsync();
-            return projects;
+
+            // Get projects where user is a member
+            var memberProjects = await _context.ProjectMembers
+                .Find(m => m.UserId == userId)
+                .ToListAsync();
+
+            var memberProjectIds = memberProjects.Select(m => m.ProjectId).ToList();
+
+            // Get the actual project details for member projects
+            var sharedProjects = new List<Project>();
+            if (memberProjectIds.Any())
+            {
+                var filter = Builders<Project>.Filter.In(p => p.Id, memberProjectIds);
+                sharedProjects = await _context.Projects.Find(filter).ToListAsync();
+            }
+
+            // Combine both lists and remove duplicates
+            var allProjects = ownedProjects.Concat(sharedProjects)
+                .GroupBy(p => p.Id)
+                .Select(g => g.First())
+                .OrderByDescending(p => p.CreatedAt)
+                .ToList();
+
+            return allProjects;
         }
 
         public async Task<Project?> GetProjectByIdAsync(string projectId, string userId)
         {
-            var filter = Builders<Project>.Filter.And(
-                Builders<Project>.Filter.Eq(p => p.Id, projectId),
-                Builders<Project>.Filter.Eq(p => p.UserId, userId)
-            );
-            return await _context.Projects.Find(filter).FirstOrDefaultAsync();
+            // First check if user owns the project
+            var project = await _context.Projects
+                .Find(p => p.Id == projectId && p.UserId == userId)
+                .FirstOrDefaultAsync();
+
+            // If not owner, check if user is a member
+            if (project == null)
+            {
+                var isMember = await _context.ProjectMembers
+                    .Find(m => m.ProjectId == projectId && m.UserId == userId)
+                    .FirstOrDefaultAsync();
+
+                if (isMember != null)
+                {
+                    // User is a member, get the project
+                    project = await _context.Projects
+                        .Find(p => p.Id == projectId)
+                        .FirstOrDefaultAsync();
+                }
+            }
+
+            return project;
         }
 
         public async Task<bool> UpdateProjectAsync(string projectId, CreateProjectViewModel model, string userId)

@@ -21,10 +21,6 @@ namespace task_management_system.Services
             _logger = logger;
         }
 
-        /// <summary>
-        /// Adds UserId to existing projects that don't have one
-        /// </summary>
-        /// <param name="defaultUserId">The default user ID to assign to projects without a UserId</param>
         public async Task AddUserIdToExistingProjects(string defaultUserId)
         {
             try
@@ -49,9 +45,6 @@ namespace task_management_system.Services
             }
         }
 
-        /// <summary>
-        /// Validates that all projects and tasks have valid UserIds
-        /// </summary>
         public async Task ValidateUserDataIntegrity()
         {
             try

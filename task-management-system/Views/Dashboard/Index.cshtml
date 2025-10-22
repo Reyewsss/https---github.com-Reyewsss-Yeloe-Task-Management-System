@@ -19,44 +19,50 @@
 
     <!-- Stats Cards -->
     <div class="stats-grid">
-        <div class="stat-card">
-            <div class="stat-icon">
-                <i class="fas fa-tasks"></i>
+        <a href="@Url.Action("Index", "Task", new { filter = "all" })" class="stat-card-link">
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="fas fa-tasks"></i>
+                </div>
+                <div class="stat-content">
+                    <h3 class="stat-number" id="totalTasks">@ViewBag.TotalTasks</h3>
+                    <p class="stat-label">Total Tasks</p>
+                    <span class="stat-trend">
+                        <i class="fas fa-arrow-up"></i> Active tasks
+                    </span>
+                </div>
             </div>
-            <div class="stat-content">
-                <h3 class="stat-number" id="totalTasks">@ViewBag.TotalTasks</h3>
-                <p class="stat-label">Total Tasks</p>
-                <span class="stat-trend">
-                    <i class="fas fa-arrow-up"></i> Active tasks
-                </span>
-            </div>
-        </div>
+        </a>
 
-        <div class="stat-card">
-            <div class="stat-icon">
-                <i class="fas fa-check-circle"></i>
+        <a href="@Url.Action("Index", "Task", new { filter = "completed" })" class="stat-card-link">
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+                <div class="stat-content">
+                    <h3 class="stat-number" id="completedTasks">@ViewBag.CompletedTasks</h3>
+                    <p class="stat-label">Completed</p>
+                    <span class="stat-trend">
+                        <i class="fas fa-arrow-up"></i> Tasks completed
+                    </span>
+                </div>
             </div>
-            <div class="stat-content">
-                <h3 class="stat-number" id="completedTasks">@ViewBag.CompletedTasks</h3>
-                <p class="stat-label">Completed</p>
-                <span class="stat-trend">
-                    <i class="fas fa-arrow-up"></i> Tasks completed
-                </span>
-            </div>
-        </div>
+        </a>
 
-        <div class="stat-card">
-            <div class="stat-icon">
-                <i class="fas fa-clock"></i>
+        <a href="@Url.Action("Index", "Task", new { filter = "inprogress" })" class="stat-card-link">
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="fas fa-clock"></i>
+                </div>
+                <div class="stat-content">
+                    <h3 class="stat-number" id="pendingTasks">@ViewBag.PendingTasks</h3>
+                    <p class="stat-label">In Progress</p>
+                    <span class="stat-trend">
+                        <i class="fas fa-minus"></i> Tasks remaining
+                    </span>
+                </div>
             </div>
-            <div class="stat-content">
-                <h3 class="stat-number" id="pendingTasks">@ViewBag.PendingTasks</h3>
-                <p class="stat-label">In Progress</p>
-                <span class="stat-trend">
-                    <i class="fas fa-minus"></i> Tasks remaining
-                </span>
-            </div>
-        </div>
+        </a>
     </div>
 
     <!-- Charts and Activity Section -->
@@ -102,49 +108,70 @@
                     <i class="fas fa-clock"></i>
                     Recent Activity
                 </h3>
-                <a href="#" class="view-all-link">View All</a>
+                <a href="@Url.Action("Index", "Task")" class="view-all-link">View All</a>
             </div>
             <div class="card-content">
                 <div class="activity-list">
-                    <div class="activity-item">
-                        <div class="activity-icon">
-                            <i class="fas fa-check"></i>
+                    @if (ViewBag.RecentActivity != null && ((List<object>)ViewBag.RecentActivity).Any())
+                    {
+                        @foreach (dynamic activity in ViewBag.RecentActivity)
+                        {
+                            var timeAgo = GetTimeAgo(activity.Time);
+                            <div class="activity-item">
+                                <div class="activity-icon">
+                                    <i class="fas @activity.Icon"></i>
+                                </div>
+                                <div class="activity-content">
+                                    <p class="activity-text">@activity.Text</p>
+                                    <span class="activity-time">@timeAgo</span>
+                                </div>
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <div class="empty-state-small">
+                            <i class="fas fa-history"></i>
+                            <p>No recent activity</p>
                         </div>
-                        <div class="activity-content">
-                            <p class="activity-text">Task "Design Review" completed</p>
-                            <span class="activity-time">2 hours ago</span>
-                        </div>
-                    </div>
-                    <div class="activity-item">
-                        <div class="activity-icon">
-                            <i class="fas fa-plus"></i>
-                        </div>
-                        <div class="activity-content">
-                            <p class="activity-text">New project "Mobile App" created</p>
-                            <span class="activity-time">4 hours ago</span>
-                        </div>
-                    </div>
-                    <div class="activity-item">
-                        <div class="activity-icon">
-                            <i class="fas fa-edit"></i>
-                        </div>
-                        <div class="activity-content">
-                            <p class="activity-text">Task "API Development" updated</p>
-                            <span class="activity-time">6 hours ago</span>
-                        </div>
-                    </div>
-                    <div class="activity-item">
-                        <div class="activity-icon">
-                            <i class="fas fa-user-plus"></i>
-                        </div>
-                        <div class="activity-content">
-                            <p class="activity-text">You were assigned to "Database Migration"</p>
-                            <span class="activity-time">1 day ago</span>
-                        </div>
-                    </div>
+                    }
                 </div>
             </div>
         </div>
+
+@functions {
+    string GetTimeAgo(DateTime dateTime)
+    {
+        var timeSpan = DateTime.Now - dateTime;
+        
+        if (timeSpan.TotalSeconds < 60)
+            return "Just now";
+        if (timeSpan.TotalMinutes < 60)
+            return $"{(int)timeSpan.TotalMinutes} minute{((int)timeSpan.TotalMinutes != 1 ? "s" : "")} ago";
+        if (timeSpan.TotalHours < 24)
+            return $"{(int)timeSpan.TotalHours} hour{((int)timeSpan.TotalHours != 1 ? "s" : "")} ago";
+        if (timeSpan.TotalDays < 30)
+            return $"{(int)timeSpan.TotalDays} day{((int)timeSpan.TotalDays != 1 ? "s" : "")} ago";
+        if (timeSpan.TotalDays < 365)
+            return $"{(int)(timeSpan.TotalDays / 30)} month{((int)(timeSpan.TotalDays / 30) != 1 ? "s" : "")} ago";
+        
+        return $"{(int)(timeSpan.TotalDays / 365)} year{((int)(timeSpan.TotalDays / 365) != 1 ? "s" : "")} ago";
+    }
+    
+    string GetDeadlineTime(DateTime dueDate)
+    {
+        var timeSpan = dueDate - DateTime.Now;
+        
+        if (timeSpan.TotalHours < 24)
+            return $"{(int)timeSpan.TotalHours} hours";
+        if (timeSpan.TotalDays < 7)
+            return $"{(int)timeSpan.TotalDays} day{((int)timeSpan.TotalDays != 1 ? "s" : "")}";
+        if (timeSpan.TotalDays < 30)
+            return $"{(int)(timeSpan.TotalDays / 7)} week{((int)(timeSpan.TotalDays / 7) != 1 ? "s" : "")}";
+        
+        return dueDate.ToString("MMM dd");
+    }
+}
 
         <!-- Upcoming Deadlines -->
         <div class="dashboard-card deadlines-card">
@@ -156,33 +183,31 @@
             </div>
             <div class="card-content">
                 <div class="deadlines-list">
-                    <div class="deadline-item">
-                        <div class="deadline-info">
-                            <h4>Website Redesign</h4>
-                            <p>Final review and deployment</p>
+                    @if (ViewBag.UpcomingDeadlines != null && ((List<task_management_system.Models.AddTask>)ViewBag.UpcomingDeadlines).Any())
+                    {
+                        @foreach (var task in (List<task_management_system.Models.AddTask>)ViewBag.UpcomingDeadlines)
+                        {
+                            <a href="@Url.Action("Dashboard", "Task", new { id = task.Id })" class="deadline-item-link">
+                                <div class="deadline-item">
+                                    <div class="deadline-info">
+                                        <h4>@task.Title</h4>
+                                        <p>@task.Description</p>
+                                        <span class="priority-badge-small @task.Priority.ToString().ToLower()">@task.Priority Priority</span>
+                                    </div>
+                                    <div class="deadline-time">
+                                        <span class="time-badge">@(task.DueDate.HasValue ? GetDeadlineTime(task.DueDate.Value) : "No date")</span>
+                                    </div>
+                                </div>
+                            </a>
+                        }
+                    }
+                    else
+                    {
+                        <div class="empty-state-small">
+                            <i class="fas fa-calendar-check"></i>
+                            <p>No upcoming deadlines</p>
                         </div>
-                        <div class="deadline-time">
-                            <span class="time-badge">2 days</span>
-                        </div>
-                    </div>
-                    <div class="deadline-item">
-                        <div class="deadline-info">
-                            <h4>API Documentation</h4>
-                            <p>Complete technical documentation</p>
-                        </div>
-                        <div class="deadline-time">
-                            <span class="time-badge">5 days</span>
-                        </div>
-                    </div>
-                    <div class="deadline-item">
-                        <div class="deadline-info">
-                            <h4>Mobile App Testing</h4>
-                            <p>User acceptance testing phase</p>
-                        </div>
-                        <div class="deadline-time">
-                            <span class="time-badge">1 week</span>
-                        </div>
-                    </div>
+                    }
                 </div>
             </div>
         </div>
@@ -197,32 +222,39 @@
         </div>
         <div class="card-content">
             <div class="agenda-list">
-                <div class="agenda-item">
-                    <div class="agenda-time">
-                        <span class="time-slot">09:00 AM</span>
+                @if (ViewBag.TodaysAgenda != null && ((List<task_management_system.Models.AddTask>)ViewBag.TodaysAgenda).Any())
+                {
+                    @foreach (var task in (List<task_management_system.Models.AddTask>)ViewBag.TodaysAgenda)
+                    {
+                        <a href="@Url.Action("Dashboard", "Task", new { id = task.Id })" class="agenda-item-link">
+                            <div class="agenda-item">
+                                <div class="agenda-time">
+                                    <span class="time-slot">@(task.DueDate.HasValue ? task.DueDate.Value.ToString("hh:mm tt") : "All day")</span>
+                                </div>
+                                <div class="agenda-content">
+                                    <h4>@task.Title</h4>
+                                    <p>@task.Description</p>
+                                    @if (!string.IsNullOrEmpty(task.Project))
+                                    {
+                                        <span class="agenda-location">
+                                            <i class="fas fa-folder"></i>
+                                            @task.Project
+                                        </span>
+                                    }
+                                    <span class="priority-badge-small @task.Priority.ToString().ToLower()">@task.Priority Priority</span>
+                                </div>
+                            </div>
+                        </a>
+                    }
+                }
+                else
+                {
+                    <div class="empty-state-small">
+                        <i class="fas fa-calendar-day"></i>
+                        <p>No tasks scheduled for today</p>
+                        <small>You're all caught up!</small>
                     </div>
-                    <div class="agenda-content">
-                        <h4>Team Standup Meeting</h4>
-                        <p>Daily project sync with development team</p>
-                        <span class="agenda-location">
-                            <i class="fas fa-video"></i>
-                            Conference Room A
-                        </span>
-                    </div>
-                </div>
-                <div class="agenda-item">
-                    <div class="agenda-time">
-                        <span class="time-slot">11:30 AM</span>
-                    </div>
-                    <div class="agenda-content">
-                        <h4>Client Presentation</h4>
-                        <p>Demo of new features to client stakeholders</p>
-                        <span class="agenda-location">
-                            <i class="fas fa-video"></i>
-                            Virtual Meeting
-                        </span>
-                    </div>
-                </div>
+                }
             </div>
         </div>
     </div>

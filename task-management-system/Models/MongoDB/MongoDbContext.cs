@@ -21,5 +21,7 @@ namespace task_management_system.Data
         public IMongoCollection<Project> Projects => _database.GetCollection<Project>("projects");
         public IMongoCollection<ProjectInvitation> ProjectInvitations => _database.GetCollection<ProjectInvitation>("projectInvitations");
         public IMongoCollection<ProjectMember> ProjectMembers => _database.GetCollection<ProjectMember>("projectMembers");
+        public IMongoCollection<Comment> Comments => _database.GetCollection<Comment>("comments");
+        public IMongoCollection<WorkLog> WorkLogs => _database.GetCollection<WorkLog>("workLogs");
     }
 }

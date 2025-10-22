@@ -46,7 +46,6 @@ namespace task_management_system.Controllers
             return View();
         }
 
-        // API endpoint to get calendar events
         [HttpGet]
         public async Task<IActionResult> GetCalendarEvents()
         {
@@ -66,7 +65,6 @@ namespace task_management_system.Controllers
                 var tasks = await _taskService.GetUserTasksAsync(userId);
                 var projects = await _projectService.GetUserProjectsAsync(userId);
 
-                // Convert tasks to calendar events
                 var events = new List<object>();
 
                 foreach (var task in tasks)

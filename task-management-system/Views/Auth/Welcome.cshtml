@@ -5,8 +5,7 @@
 
 <link rel="stylesheet" href="~/css/auth/auth.css" asp-append-version="true" />
 
-<div class="welcome-container">
-    <div class="welcome-content">
+    <div class="welcome-content mt-4 mb-4">
         <div class="welcome-header">
             <img src="/images/logo/yeloe-logo.png" alt="Yeloe Logo" class="welcome-logo">
             <h1>Getting Started with Yeloe</h1>
@@ -29,15 +28,14 @@
                 <h3>Manage Projects</h3>
                 <p>Group your tasks into projects for better organization</p>
             </div>
+        </div>
 
-        <div class="welcome-actions" style="text-align: center;">
+        <div class="welcome-actions">
             <a href="@Url.Action("Index", "Dashboard")" class="btn btn-primary welcome-btn">
-                <i class="fas fa-rocket"></i>
                 Start Using Yeloe
             </a>
         </div>
     </div>
-</div>
 
 @* Welcome Modal *@
 @if (ViewBag.ShowWelcomeModal)

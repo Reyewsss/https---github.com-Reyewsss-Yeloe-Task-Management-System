@@ -1,0 +1,42 @@
+/* Page Transition Styles - Works with existing loader */
+
+/* Progress Bar at top of page */
+#pageTransitionProgress {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 0%;
+    height: 3px;
+    background: linear-gradient(90deg, #6A4018, #8B5A2B);
+    z-index: 999999;
+    transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    opacity: 0;
+}
+
+#pageTransitionProgress.active {
+    opacity: 1;
+}
+
+/* Dark Mode Support for Progress Bar */
+body.dashboard-body.dark-mode #pageTransitionProgress {
+    background: linear-gradient(90deg, #8B5A2B, #D2B48C);
+}
+
+/* Ensure existing loader is positioned correctly */
+#loader {
+    transition: opacity 0.3s ease;
+}
+
+/* Smooth page fade-in on load */
+body {
+    animation: pageTransitionFadeIn 0.3s ease-in;
+}
+
+@keyframes pageTransitionFadeIn {
+    from {
+        opacity: 0.95;
+    }
+    to {
+        opacity: 1;
+    }
+}

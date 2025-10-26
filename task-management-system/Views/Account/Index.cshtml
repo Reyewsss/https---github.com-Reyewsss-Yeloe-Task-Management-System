@@ -8,11 +8,23 @@
 
     <!-- Profile Section -->
     <div class="account-card mt-4">
-        <div class="card-content">.
+        <div class="card-content">
             <div class="profile-avatar">
-                <div class="avatar-circle">
-                    <i class="fas fa-user"></i>
+                <div class="avatar-circle" id="avatarDisplay">
+                    @if (!string.IsNullOrEmpty(Model?.ProfilePicture) && !string.IsNullOrEmpty(Model?.ProfilePictureContentType))
+                    {
+                        <img src="data:@Model.ProfilePictureContentType;base64,@Model.ProfilePicture" alt="Profile Picture" class="profile-picture-img" id="profilePictureImg" />
+                    }
+                    else
+                    {
+                        <i class="fas fa-user" id="defaultAvatar"></i>
+                    }
+                    <div class="avatar-upload-overlay" onclick="document.getElementById('profilePictureInput').click()">
+                        <i class="fas fa-camera"></i>
+                        <span>Change Photo</span>
+                    </div>
                 </div>
+                <input type="file" id="profilePictureInput" accept="image/*" style="display: none;" onchange="uploadProfilePicture()" />
                 <div class="avatar-info">
                     <h4>@(Model?.FirstName ?? "User") @(Model?.LastName ?? "")</h4>
                     <p>@(Model?.Email ?? ViewBag.UserEmail ?? "No email")</p>

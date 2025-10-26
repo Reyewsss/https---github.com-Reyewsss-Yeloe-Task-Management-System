@@ -48,6 +48,8 @@ namespace task_management_system.Controllers
             var projects = await _projectService.GetUserProjectsAsync(userId);
             ViewBag.Projects = projects;
             ViewBag.UserName = _userSessionService.GetCurrentUserName();
+            ViewBag.UserProfilePicture = _userSessionService.GetCurrentUserProfilePicture();
+            ViewBag.UserId = userId;
             
             return View(tasks);
         }
@@ -80,6 +82,9 @@ namespace task_management_system.Controllers
             }
 
             ViewBag.UserName = _userSessionService.GetCurrentUserName();
+            ViewBag.UserProfilePicture = _userSessionService.GetCurrentUserProfilePicture();
+            ViewBag.UserId = userId;
+            ViewBag.IsTaskOwner = task.UserId == userId;
             
             return View(task);
         }
@@ -225,9 +230,21 @@ namespace task_management_system.Controllers
 
                 await _context.WorkLogs.InsertOneAsync(workLog);
 
+                // Automatically set task status to InProgress when work is submitted
+                var task = await _context.Tasks.Find(t => t.Id == taskId).FirstOrDefaultAsync();
+                if (task != null && task.Status != task_management_system.Models.TaskStatus.Completed)
+                {
+                    var taskFilter = Builders<AddTask>.Filter.Eq(t => t.Id, taskId);
+                    var taskUpdate = Builders<AddTask>.Update
+                        .Set(t => t.Status, task_management_system.Models.TaskStatus.InProgress)
+                        .Set(t => t.UpdatedAt, DateTime.UtcNow);
+                    
+                    await _context.Tasks.UpdateOneAsync(taskFilter, taskUpdate);
+                }
+
                 return Json(new { 
                     success = true, 
-                    message = "Work submitted successfully!",
+                    message = "Work submitted successfully! Task status updated to In Progress.",
                     workLog = new {
                         id = workLog.Id,
                         userName = workLog.UserName,
@@ -256,6 +273,8 @@ namespace task_management_system.Controllers
                     return Json(new { success = false, message = "User not authenticated" });
                 }
 
+                var userId = _userSessionService.GetCurrentUserId();
+
                 if (string.IsNullOrEmpty(taskId))
                 {
                     return Json(new { success = false, message = "Task ID is required" });
@@ -268,6 +287,7 @@ namespace task_management_system.Controllers
 
                 var workLogsData = workLogs.Select(w => new {
                     id = w.Id,
+                    userId = w.UserId,
                     userName = w.UserName,
                     description = w.Description,
                     fileName = w.FileName,
@@ -276,8 +296,15 @@ namespace task_management_system.Controllers
                     createdAt = w.CreatedAt,
                     timeAgo = GetTimeAgo(w.CreatedAt)
                 }).ToList();
+
+                // Check if current user has submitted work
+                var hasSubmittedWork = workLogs.Any(w => w.UserId == userId);
                 
-                return Json(new { success = true, workLog = workLogsData });
+                return Json(new { 
+                    success = true, 
+                    workLog = workLogsData,
+                    hasSubmittedWork = hasSubmittedWork
+                });
             }
             catch (Exception ex)
             {
@@ -390,6 +417,8 @@ namespace task_management_system.Controllers
                         title = task.Title,
                         description = task.Description,
                         project = task.Project,
+                        assignedTo = task.AssignedTo,
+                        assignedToName = task.AssignedToName,
                         dueDate = task.DueDate?.ToString("yyyy-MM-dd"),
                         priority = task.Priority.ToString(),
                         status = task.Status.ToString(),
@@ -449,6 +478,7 @@ namespace task_management_system.Controllers
                     Title = request.Title,
                     Description = request.Description,
                     Project = request.Project,
+                    AssignedTo = request.AssignedTo,
                     DueDate = request.DueDate,
                     Priority = request.Priority
                 };
@@ -507,20 +537,33 @@ namespace task_management_system.Controllers
                     return Json(new { success = false, message = "User not authenticated" });
                 }
 
+                // Get current task state before updating
+                var task = await _context.Tasks.Find(t => t.Id == request.TaskId).FirstOrDefaultAsync();
+                if (task == null)
+                {
+                    return Json(new { success = false, message = "Task not found" });
+                }
+
+                bool wasCompleted = task.IsCompleted;
+
                 var success = await _taskService.CompleteTaskAsync(request.TaskId, userId);
                 
                 if (success)
                 {
-                    return Json(new { success = true, message = "Task completed successfully!" });
+                    string message = wasCompleted 
+                        ? "Task returned to Pending. Member can resubmit work." 
+                        : "Task marked as Completed!";
+                    
+                    return Json(new { success = true, message = message });
                 }
                 else
                 {
-                    return Json(new { success = false, message = "Task not found or already completed" });
+                    return Json(new { success = false, message = "Failed to update task status" });
                 }
             }
             catch (Exception ex)
             {
-                return Json(new { success = false, message = $"Error completing task: {ex.Message}" });
+                return Json(new { success = false, message = $"Error updating task: {ex.Message}" });
             }
         }
 
@@ -590,6 +633,7 @@ namespace task_management_system.Controllers
             public string Title { get; set; } = string.Empty;
             public string? Description { get; set; }
             public string? Project { get; set; }
+            public string? AssignedTo { get; set; }
             public DateTime? DueDate { get; set; }
             public Models.TaskPriority Priority { get; set; }
         }

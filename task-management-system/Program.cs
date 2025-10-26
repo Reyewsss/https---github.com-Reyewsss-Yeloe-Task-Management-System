@@ -28,6 +28,9 @@ builder.Services.AddScoped<IProjectService, ProjectService>();
 builder.Services.AddScoped<IProjectInvitationService, ProjectInvitationService>();
 builder.Services.AddScoped<IUserSessionService, UserSessionService>(); // Add user session service
 
+// Add background service for deadline notifications
+builder.Services.AddHostedService<DeadlineNotificationBackgroundService>();
+
 var app = builder.Build();
 
 // Configure pipeline

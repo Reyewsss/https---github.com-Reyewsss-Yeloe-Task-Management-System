@@ -42,6 +42,7 @@ namespace task_management_system.Controllers
             ViewBag.Projects = projects;
             ViewBag.UserName = _userSessionService.GetCurrentUserName();
             ViewBag.UserEmail = _userSessionService.GetCurrentUserEmail();
+            ViewBag.UserProfilePicture = _userSessionService.GetCurrentUserProfilePicture();
 
             return View();
         }

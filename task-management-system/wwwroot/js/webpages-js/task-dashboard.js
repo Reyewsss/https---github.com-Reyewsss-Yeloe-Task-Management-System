@@ -204,8 +204,12 @@
                 document.getElementById('workDescription').value = '';
                 removeFile();
                 
-                showNotification('success', 'Work submitted successfully!');
-                loadWorkLog();
+                showNotification('success', result.message || 'Work submitted successfully! Task status updated to In Progress.');
+                
+                // Reload page after a short delay to show updated status
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1500);
             } else {
                 showNotification('error', result.message || 'Failed to submit work');
             }
@@ -223,9 +227,42 @@
             if (result.success) {
                 workLog = result.workLog || [];
                 renderWorkLog();
+                
+                // Update submit button state based on whether user has submitted work
+                updateSubmitButtonState(result.hasSubmittedWork);
             }
         } catch (error) {
             console.error('Error loading work log:', error);
+        }
+    }
+
+    function updateSubmitButtonState(hasSubmitted) {
+        const submitButton = document.querySelector('button[onclick="submitWork()"]');
+        
+        if (submitButton) {
+            // Check if task status is pending (visible in the page)
+            const statusBadge = document.querySelector('.task-status-badge');
+            const isPending = statusBadge && statusBadge.textContent.toLowerCase().includes('pending');
+            
+            if (hasSubmitted && !isPending) {
+                // Change button to outline style, disabled state
+                submitButton.classList.remove('btn-primary');
+                submitButton.classList.add('btn-outline-success');
+                submitButton.disabled = true;
+                submitButton.innerHTML = `
+                    <i class="fas fa-check-circle"></i>
+                    Submitted
+                `;
+            } else if (isPending) {
+                // Reset button to active state if task was returned to pending
+                submitButton.classList.add('btn-primary');
+                submitButton.classList.remove('btn-outline-success');
+                submitButton.disabled = false;
+                submitButton.innerHTML = `
+                    <i class="fas fa-check"></i>
+                    Submit Work
+                `;
+            }
         }
     }
 

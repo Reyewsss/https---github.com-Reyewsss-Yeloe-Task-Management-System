@@ -195,7 +195,7 @@
                                         <span class="priority-badge-small @task.Priority.ToString().ToLower()">@task.Priority Priority</span>
                                     </div>
                                     <div class="deadline-time">
-                                        <span class="time-badge">@(task.DueDate.HasValue ? GetDeadlineTime(task.DueDate.Value) : "No date")</span>
+                                        <span class="time-badge">@(task.DueDate.HasValue ? GetDeadlineTime(task.DueDate.Value.ToLocalTime()) : "No date")</span>
                                     </div>
                                 </div>
                             </a>
@@ -229,7 +229,7 @@
                         <a href="@Url.Action("Dashboard", "Task", new { id = task.Id })" class="agenda-item-link">
                             <div class="agenda-item">
                                 <div class="agenda-time">
-                                    <span class="time-slot">@(task.DueDate.HasValue ? task.DueDate.Value.ToString("hh:mm tt") : "All day")</span>
+                                    <span class="time-slot">@(task.DueDate.HasValue ? task.DueDate.Value.ToLocalTime().ToString("hh:mm tt") : "All day")</span>
                                 </div>
                                 <div class="agenda-content">
                                     <h4>@task.Title</h4>

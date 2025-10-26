@@ -9,6 +9,110 @@ function initializeAccountPage() {
     initializePreferenceToggles();
     initializeDangerZone();
     initializeModals();
+    initializeProfilePicture();
+}
+
+// Profile Picture Functions
+function initializeProfilePicture() {
+    const avatarCircle = document.getElementById('avatarDisplay');
+    if (avatarCircle) {
+        avatarCircle.addEventListener('mouseenter', function() {
+            const overlay = this.querySelector('.avatar-upload-overlay');
+            if (overlay) overlay.style.opacity = '1';
+        });
+        avatarCircle.addEventListener('mouseleave', function() {
+            const overlay = this.querySelector('.avatar-upload-overlay');
+            if (overlay) overlay.style.opacity = '0';
+        });
+    }
+}
+
+function uploadProfilePicture() {
+    const fileInput = document.getElementById('profilePictureInput');
+    const file = fileInput.files[0];
+
+    if (!file) {
+        return;
+    }
+
+    // Validate file type
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'];
+    if (!allowedTypes.includes(file.type)) {
+        showNotification('error', 'Invalid file type. Only JPG, PNG, and GIF are allowed.');
+        fileInput.value = '';
+        return;
+    }
+
+    // Show loading state
+    const avatarCircle = document.getElementById('avatarDisplay');
+    const overlay = avatarCircle.querySelector('.avatar-upload-overlay');
+    const originalOverlayContent = overlay.innerHTML;
+    overlay.innerHTML = '<i class="fas fa-spinner fa-spin"></i><span>Uploading...</span>';
+    overlay.style.opacity = '1';
+
+    // Create form data
+    const formData = new FormData();
+    formData.append('profilePicture', file);
+
+    fetch('/Account/UploadProfilePicture', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showNotification('success', data.message || 'Profile picture updated successfully!');
+            
+            // Update the avatar display
+            const defaultAvatar = document.getElementById('defaultAvatar');
+            let profileImg = document.getElementById('profilePictureImg');
+            
+            if (defaultAvatar) {
+                defaultAvatar.remove();
+            }
+
+            if (!profileImg) {
+                profileImg = document.createElement('img');
+                profileImg.id = 'profilePictureImg';
+                profileImg.className = 'profile-picture-img';
+                avatarCircle.insertBefore(profileImg, overlay);
+            }
+            
+            // Set the base64 data URL directly
+            profileImg.src = data.profilePictureUrl;
+            
+            // Also update the header avatar if it exists
+            const headerAvatar = document.querySelector('.user-avatar-small img');
+            if (headerAvatar) {
+                headerAvatar.src = data.profilePictureUrl;
+            } else {
+                // If no image exists, create one and replace the icon
+                const headerAvatarContainer = document.querySelector('.user-avatar-small');
+                if (headerAvatarContainer) {
+                    const icon = headerAvatarContainer.querySelector('i');
+                    if (icon) {
+                        icon.remove();
+                    }
+                    const newImg = document.createElement('img');
+                    newImg.src = data.profilePictureUrl;
+                    newImg.alt = 'Profile';
+                    newImg.className = 'user-avatar-img';
+                    headerAvatarContainer.appendChild(newImg);
+                }
+            }
+        } else {
+            showNotification('error', data.message || 'Failed to upload profile picture.');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showNotification('error', 'An error occurred while uploading. Please try again.');
+    })
+    .finally(() => {
+        overlay.innerHTML = originalOverlayContent;
+        overlay.style.opacity = '0';
+        fileInput.value = '';
+    });
 }
 
 // Modal Functions

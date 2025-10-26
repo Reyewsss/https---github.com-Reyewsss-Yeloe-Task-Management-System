@@ -21,6 +21,12 @@ namespace task_management_system.Models
         [BsonElement("lastName")]
         public string LastName { get; set; } = string.Empty;
 
+        [BsonElement("age")]
+        public int Age { get; set; }
+
+        [BsonElement("address")]
+        public string Address { get; set; } = string.Empty;
+
         [BsonElement("isEmailVerified")]
         public bool IsEmailVerified { get; set; } = false;
 
@@ -32,5 +38,11 @@ namespace task_management_system.Models
 
         [BsonElement("createdAt")]
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
+        [BsonElement("profilePicture")]
+        public string? ProfilePicture { get; set; } // Stores base64 encoded image data
+
+        [BsonElement("profilePictureContentType")]
+        public string? ProfilePictureContentType { get; set; } // Stores MIME type (e.g., "image/jpeg")
     }
 }

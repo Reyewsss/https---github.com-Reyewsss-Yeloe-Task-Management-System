@@ -1,4 +1,4 @@
-﻿using MongoDB.Driver;
+﻿﻿using MongoDB.Driver;
 using task_management_system.Data;
 using task_management_system.Models;
 
@@ -6,7 +6,7 @@ namespace task_management_system.Services
 {
     public interface IAuthService
     {
-        Task<(bool success, string message)> RegisterAsync(string email, string password, string firstName, string lastName);
+        Task<(bool success, string message)> RegisterAsync(string email, string password, string firstName, string lastName, DateTime dateOfBirth, string? address);
         Task<User?> LoginAsync(string email, string password);
         Task<(bool success, string message)> SendEmailVerificationAsync(string email);
         Task<(bool success, string message)> VerifyEmailAsync(string email, string verificationCode);
@@ -14,7 +14,9 @@ namespace task_management_system.Services
         Task<(bool success, string message)> ResetPasswordAsync(string email, string token, string newPassword);
         Task<bool> ValidatePasswordResetTokenAsync(string email, string token);
         Task<User?> GetUserByEmailAsync(string email);
+        Task<User?> GetUserByIdAsync(string userId);
         Task<(bool success, string message)> UpdateProfileAsync(string userId, string firstName, string lastName, string email);
+        Task<(bool success, string message)> UpdateProfilePictureAsync(string userId, string base64Image, string contentType);
         Task<(bool success, string message)> ChangePasswordAsync(string userId, string currentPassword, string newPassword);
     }
 
@@ -31,7 +33,7 @@ namespace task_management_system.Services
             _emailService = emailService;
         }
 
-        public async Task<(bool success, string message)> RegisterAsync(string email, string password, string firstName, string lastName)
+        public async Task<(bool success, string message)> RegisterAsync(string email, string password, string firstName, string lastName, DateTime dateOfBirth, string? address)
         {
             // Check if user already exists
             var existingUser = await _context.Users
@@ -41,6 +43,9 @@ namespace task_management_system.Services
             if (existingUser != null)
                 return (false, "Email already exists.");
 
+            // Calculate age from date of birth
+            int age = CalculateAge(dateOfBirth);
+
             // Create new user (NOT verified by default)
             var user = new User
             {
@@ -48,6 +53,8 @@ namespace task_management_system.Services
                 PasswordHash = _passwordService.HashPassword(password),
                 FirstName = firstName,
                 LastName = lastName,
+                Age = age,
+                Address = address ?? string.Empty,
                 IsEmailVerified = false, 
                 CreatedAt = DateTime.UtcNow
             };
@@ -261,6 +268,20 @@ namespace task_management_system.Services
             }
         }
 
+        public async Task<User?> GetUserByIdAsync(string userId)
+        {
+            try
+            {
+                return await _context.Users
+                    .Find(u => u.Id == userId)
+                    .FirstOrDefaultAsync();
+            }
+            catch (Exception)
+            {
+                return null;
+            }
+        }
+
         public async Task<(bool success, string message)> UpdateProfileAsync(string userId, string firstName, string lastName, string email)
         {
             try
@@ -341,6 +362,51 @@ namespace task_management_system.Services
             {
                 return (false, $"Error changing password: {ex.Message}");
             }
+        }
+
+        public async Task<(bool success, string message)> UpdateProfilePictureAsync(string userId, string base64Image, string contentType)
+        {
+            try
+            {
+                var user = await _context.Users
+                    .Find(u => u.Id == userId)
+                    .FirstOrDefaultAsync();
+
+                if (user == null)
+                    return (false, "User not found.");
+
+                // Update profile picture and content type
+                var update = Builders<User>.Update
+                    .Set(u => u.ProfilePicture, base64Image)
+                    .Set(u => u.ProfilePictureContentType, contentType);
+
+                var result = await _context.Users.UpdateOneAsync(
+                    u => u.Id == userId,
+                    update
+                );
+
+                if (result.ModifiedCount > 0)
+                    return (true, "Profile picture updated successfully!");
+
+                return (false, "Failed to update profile picture.");
+            }
+            catch (Exception ex)
+            {
+                return (false, $"Error updating profile picture: {ex.Message}");
+            }
+        }
+
+        // Helper method to calculate age from date of birth
+        private int CalculateAge(DateTime dateOfBirth)
+        {
+            var today = DateTime.Today;
+            var age = today.Year - dateOfBirth.Year;
+            
+            // Subtract one year if birthday hasn't occurred yet this year
+            if (dateOfBirth.Date > today.AddYears(-age))
+                age--;
+            
+            return age;
         }
     }
 }

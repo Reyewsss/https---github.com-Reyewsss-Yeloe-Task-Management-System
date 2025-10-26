@@ -7,8 +7,10 @@ namespace task_management_system.Services
         string? GetCurrentUserId();
         string? GetCurrentUserEmail();
         string? GetCurrentUserName();
+        string? GetCurrentUserProfilePicture();
         bool IsUserLoggedIn();
         void UpdateUserSession(string email, string firstName, string lastName);
+        void UpdateProfilePicture(string profilePicture);
     }
 
     public class UserSessionService : IUserSessionService
@@ -35,6 +37,11 @@ namespace task_management_system.Services
             return _httpContextAccessor.HttpContext?.Session.GetString("UserName");
         }
 
+        public string? GetCurrentUserProfilePicture()
+        {
+            return _httpContextAccessor.HttpContext?.Session.GetString("UserProfilePicture");
+        }
+
         public bool IsUserLoggedIn()
         {
             return !string.IsNullOrEmpty(GetCurrentUserId());
@@ -46,6 +53,14 @@ namespace task_management_system.Services
             {
                 _httpContextAccessor.HttpContext.Session.SetString("UserEmail", email);
                 _httpContextAccessor.HttpContext.Session.SetString("UserName", $"{firstName} {lastName}");
+            }
+        }
+
+        public void UpdateProfilePicture(string profilePicture)
+        {
+            if (_httpContextAccessor.HttpContext?.Session != null)
+            {
+                _httpContextAccessor.HttpContext.Session.SetString("UserProfilePicture", profilePicture ?? string.Empty);
             }
         }
     }

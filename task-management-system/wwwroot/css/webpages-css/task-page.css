@@ -27,10 +27,17 @@
     margin-top: 25px;
 }
 
+.page-header .header-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
 .header-left h1 {
     font-size: 2rem;
     font-weight: 600;
-    margin: 0 0 0.5rem 0;
+    margin: 0;
     display: flex;
     align-items: center;
     gap: 0.75rem;
@@ -191,13 +198,22 @@
     align-items: center;
 }
 
-.task-project, .task-due, .task-priority {
+.task-project, .task-due, .task-priority, .task-assigned {
     padding: 0.375rem 0.875rem;
     border-radius: 20px;
     font-size: 0.8rem;
     font-weight: 500;
     background: #e9ecef;
     color: #333;
+}
+
+.task-assigned {
+    background: linear-gradient(135deg, #E3F2FD 0%, #BBDEFB 100%);
+    color: #1565C0;
+}
+
+.task-assigned i {
+    margin-right: 0.25rem;
 }
 
 .task-actions {
@@ -244,6 +260,52 @@
     color: var(--text-light);
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(106, 64, 24, 0.3);
+}
+
+.btn-icon.assign {
+    background: var(--gray-medium);
+    border: none;
+    color: var(--text-dark);
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.btn-icon.assign:hover {
+    background: var(--primary-color);
+    color: var(--text-light);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(106, 64, 24, 0.3);
+}
+
+.btn-icon.assign::before {
+    content: '\f234';
+    font-family: 'Font Awesome 5 Free';
+    font-weight: 900;
+}
+
+.task-member-badge {
+    background: linear-gradient(135deg, #E8F5E9 0%, #C8E6C9 100%);
+    color: #2E7D32;
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    white-space: nowrap;
+    border: 1px solid #81C784;
+}
+
+.task-member-badge i {
+    font-size: 0.9rem;
 }
 
 .fa-tasks {
@@ -415,6 +477,63 @@
     color: #999;
 }
 
+/* Datetime input styling */
+input[type="datetime-local"] {
+    position: relative;
+    cursor: pointer;
+}
+
+input[type="datetime-local"]::-webkit-calendar-picker-indicator {
+    cursor: pointer;
+    opacity: 0.6;
+    transition: opacity 0.3s ease;
+}
+
+input[type="datetime-local"]::-webkit-calendar-picker-indicator:hover {
+    opacity: 1;
+}
+
+.form-text {
+    display: block;
+    margin-top: 0.5rem;
+    font-size: 0.85rem;
+    color: #666;
+}
+
+.form-text i {
+    margin-right: 0.25rem;
+    color: var(--primary-color);
+}
+
+/* Time input styling */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+    opacity: 1;
+    height: 30px;
+}
+
+input[type="number"] {
+    -moz-appearance: textfield;
+    appearance: textfield;
+}
+
+#timeInputSection {
+    background: #f8f9fa;
+    padding: 12px;
+    border-radius: 8px;
+    border: 1px solid #e0e0e0;
+}
+
+#timeInputSection .form-control {
+    font-weight: 600;
+    font-size: 1rem;
+}
+
+#timeInputSection select {
+    font-weight: 600;
+    color: var(--primary-color);
+}
+
 .form-row {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -512,6 +631,35 @@
 
 body.modal-open {
     overflow: hidden;
+}
+
+/* Remove arrows from number inputs */
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+input[type="number"] {
+    -moz-appearance: textfield;
+    appearance: textfield;
+}
+
+/* For Firefox */
+input[type="number"] {
+    -moz-appearance: textfield;
+}
+
+/* Ensure the inputs still look good */
+#taskHour, #taskMinute {
+    text-align: center;
+    font-weight: 600;
+    font-size: 1rem;
+}
+
+#taskHour::placeholder, #taskMinute::placeholder {
+    color: #999;
+    font-weight: normal;
 }
 
 @media (max-width: 768px) {

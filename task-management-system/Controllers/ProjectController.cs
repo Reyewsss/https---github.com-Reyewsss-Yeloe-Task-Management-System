@@ -41,6 +41,7 @@ namespace task_management_system.Controllers
             // Get all projects for the current user
             var projects = await _projectService.GetUserProjectsAsync(userId);
             ViewBag.UserName = _userSessionService.GetCurrentUserName();
+            ViewBag.UserProfilePicture = _userSessionService.GetCurrentUserProfilePicture();
             return View(projects);
         }
 
@@ -78,6 +79,9 @@ namespace task_management_system.Controllers
             ViewBag.ProjectTasks = projectTasks;
             ViewBag.ProjectMembers = members;
             ViewBag.UserName = _userSessionService.GetCurrentUserName();
+            ViewBag.UserProfilePicture = _userSessionService.GetCurrentUserProfilePicture();
+            ViewBag.UserId = userId;
+            ViewBag.IsProjectOwner = project.UserId == userId;
             ViewBag.TotalTasks = projectTasks.Count;
             ViewBag.CompletedTasks = projectTasks.Count(t => t.IsCompleted);
             ViewBag.PendingTasks = projectTasks.Count(t => !t.IsCompleted);
@@ -577,6 +581,55 @@ namespace task_management_system.Controllers
             catch (Exception ex)
             {
                 return Json(new { success = false, message = $"Error removing member: {ex.Message}" });
+            }
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetProjectMembers(string projectName)
+        {
+            try
+            {
+                if (!_userSessionService.IsUserLoggedIn())
+                {
+                    return Json(new { success = false, message = "User not authenticated" });
+                }
+
+                var userId = _userSessionService.GetCurrentUserId();
+                if (string.IsNullOrEmpty(userId))
+                {
+                    return Json(new { success = false, message = "User not authenticated" });
+                }
+
+                if (string.IsNullOrEmpty(projectName))
+                {
+                    return Json(new { success = false, message = "Project name is required" });
+                }
+
+                // Get project by name
+                var projects = await _projectService.GetUserProjectsAsync(userId);
+                var project = projects.FirstOrDefault(p => p.Name.Equals(projectName, StringComparison.OrdinalIgnoreCase));
+
+                if (project == null)
+                {
+                    return Json(new { success = false, message = "Project not found" });
+                }
+
+                // Get project members from invitations service
+                var members = await _invitationService.GetProjectMembersAsync(project.Id!);
+
+                var memberList = members.Select(m => new
+                {
+                    userId = m.UserId,
+                    userName = m.UserName,
+                    userEmail = m.UserEmail,
+                    role = m.Role.ToString()
+                }).ToList();
+
+                return Json(new { success = true, members = memberList });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = $"Error getting project members: {ex.Message}" });
             }
         }
     }

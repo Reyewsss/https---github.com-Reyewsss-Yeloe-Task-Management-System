@@ -17,8 +17,9 @@
         <span class="task-priority-badge @Model.Priority.ToString().ToLower()">@Model.Priority Priority</span>
         @if (Model.DueDate.HasValue)
         {
+            var localDueDate = Model.DueDate.Value.ToLocalTime();
             <span class="task-due-badge">
-                <i class="fas fa-calendar"></i> Due: @Model.DueDate.Value.ToString("MMM dd, yyyy")
+                <i class="fas fa-clock"></i> Due: @localDueDate.ToString("MMM dd, yyyy 'at' hh:mm tt")
             </span>
         }
     </div>
@@ -41,19 +42,6 @@
                 <div class="info-row">
                     <label>Description:</label>
                     <div class="info-value">@(Model.Description ?? "No description provided")</div>
-                </div>
-                <div class="info-row">
-                    <label>Due Date:</label>
-                    <div class="info-value">
-                        @if (Model.DueDate.HasValue)
-                        {
-                            @Model.DueDate.Value.ToString("MMMM dd, yyyy")
-                        }
-                        else
-                        {
-                            <span class="text-muted">No due date</span>
-                        }
-                    </div>
                 </div>
                 <div class="info-row">
                     <label>Project:</label>
@@ -109,61 +97,107 @@
 
     <!-- Right Side - Add Work Section -->
     <div class="task-sidebar mb-4">
-        <div class="work-card">
-            <div class="card-header">
-                <h3><i class="fas fa-briefcase"></i> Add Work</h3>
-            </div>
-            <div class="card-content">
-                <form id="addWorkForm">
-                    <div class="form-group">
-                        <label for="workDescription">Work Description</label>
-                        <textarea id="workDescription" class="form-control" rows="4" 
-                                  placeholder="Describe the work done..."></textarea>
-                    </div>
-                    <div class="form-group">
-                        <label for="workFile">
-                            <i class="fas fa-paperclip"></i> Attach File
-                        </label>
-                        <div class="file-upload-wrapper">
-                            <input type="file" id="workFile" class="file-input" 
-                                   accept="*/*" onchange="handleFileSelect(event)">
-                            <label for="workFile" class="file-upload-label">
-                                <i class="fas fa-cloud-upload-alt"></i>
-                                <span id="fileLabel">Choose a file or drag & drop</span>
+        @if (ViewBag.IsTaskOwner != true)
+        {
+            <!-- Show work submission form for assigned members -->
+            <div class="work-card">
+                <div class="card-header">
+                    <h3><i class="fas fa-briefcase"></i> Submit Work</h3>
+                </div>
+                <div class="card-content">
+                    <form id="addWorkForm">
+                        @if (Model.Status == task_management_system.Models.TaskStatus.Pending)
+                        {
+                            <div class="alert alert-info mb-3" style="background: #FFF3E0; color: #E65100; border: 1px solid #FFB74D;">
+                                <i class="fas fa-info-circle"></i>
+                                <div style="margin-left: 0.5rem;">
+                                    <strong>Revision Requested</strong>
+                                    <p style="margin: 0.25rem 0 0 0; font-size: 0.9rem;">The team lead has returned this task for revision. Please resubmit your work.</p>
+                                </div>
+                            </div>
+                        }
+                        <div class="form-group">
+                            <label for="workDescription">Work Description</label>
+                            <textarea id="workDescription" class="form-control" rows="4" 
+                                      placeholder="Describe the work done..."></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label for="workFile">
+                                <i class="fas fa-paperclip"></i> Attach File
                             </label>
-                            <div id="filePreview" class="file-preview" style="display: none;">
-                                <div class="file-info">
-                                    <i class="fas fa-file"></i>
-                                    <div class="file-details">
-                                        <span class="file-name" id="fileName"></span>
-                                        <span class="file-size" id="fileSize"></span>
+                            <div class="file-upload-wrapper">
+                                <input type="file" id="workFile" class="file-input" 
+                                       accept="*/*" onchange="handleFileSelect(event)">
+                                <label for="workFile" class="file-upload-label">
+                                    <i class="fas fa-cloud-upload-alt"></i>
+                                    <span id="fileLabel">Choose a file or drag & drop</span>
+                                </label>
+                                <div id="filePreview" class="file-preview" style="display: none;">
+                                    <div class="file-info">
+                                        <i class="fas fa-file"></i>
+                                        <div class="file-details">
+                                            <span class="file-name" id="fileName"></span>
+                                            <span class="file-size" id="fileSize"></span>
+                                        </div>
+                                        <button type="button" class="remove-file" onclick="removeFile()">
+                                            <i class="fas fa-times"></i>
+                                        </button>
                                     </div>
-                                    <button type="button" class="remove-file" onclick="removeFile()">
-                                        <i class="fas fa-times"></i>
-                                    </button>
                                 </div>
                             </div>
                         </div>
-                    </div>
-                    <button type="button" class="btn btn-primary btn-block" onclick="submitWork()">
-                        <i class="fas fa-check"></i>
-                        Submit Work
-                    </button>
-                </form>
+                        <button type="button" class="btn btn-primary btn-block" onclick="submitWork()">
+                            <i class="fas fa-check"></i>
+                            Submit Work
+                        </button>
+                    </form>
 
-                <!-- Work Log -->
-                <div class="work-log">
-                    <h4><i class="fas fa-history"></i> Work Log</h4>
-                    <div id="workLogList" class="work-log-list">
-                        <!-- Work log items will be loaded here -->
-                        <div class="empty-work-log">
-                            <i class="fas fa-clipboard-list"></i>
-                            <p>No work logged yet</p>
+                    <!-- Work Log -->
+                    <div class="work-log">
+                        <h4><i class="fas fa-history"></i> My Submissions</h4>
+                        <div id="workLogList" class="work-log-list">
+                            <!-- Work log items will be loaded here -->
+                            <div class="empty-work-log">
+                                <i class="fas fa-clipboard-list"></i>
+                                <p>No work submitted yet</p>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
-        </div>
+        }
+        else
+        {
+            <!-- Show work log review for task owner -->
+            <div class="work-card">
+                <div class="card-header">
+                    <h3><i class="fas fa-clipboard-check"></i> Work Submissions</h3>
+                </div>
+                <div class="card-content">
+                    <!-- Work Log for Review -->
+                    <div class="work-log">
+                        <h4><i class="fas fa-history"></i> Team Submissions</h4>
+                        <div id="workLogList" class="work-log-list">
+                            <!-- Work log items will be loaded here -->
+                            <div class="empty-work-log">
+                                <i class="fas fa-clipboard-list"></i>
+                                <p>No work submitted yet</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="alert alert-info mt-3">
+                        <i class="fas fa-info-circle"></i>
+                        <div style="margin-left: 0.5rem;">
+                            <strong>Review Instructions:</strong>
+                            <ul style="margin: 0.5rem 0 0 0; padding-left: 1.5rem; font-size: 0.9rem;">
+                                <li>Check the task checkbox to mark as <strong>Completed</strong> after reviewing work</li>
+                                <li>Uncheck the checkbox to return task to <strong>Pending</strong> if work needs revision</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
     </div>
 </div>
 

@@ -30,6 +30,7 @@ namespace task_management_system.Controllers
             // Get user info for display
             ViewBag.UserEmail = _userSessionService.GetCurrentUserEmail();
             ViewBag.UserName = _userSessionService.GetCurrentUserName() ?? "User";
+            ViewBag.UserProfilePicture = _userSessionService.GetCurrentUserProfilePicture();
             ViewData["Title"] = "Dashboard";
 
             // Get user-specific dashboard data

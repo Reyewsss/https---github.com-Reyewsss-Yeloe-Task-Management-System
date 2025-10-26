@@ -43,6 +43,17 @@ namespace task_management_system.Controllers
             HttpContext.Session.SetString("UserId", user.Id);
             HttpContext.Session.SetString("UserEmail", user.Email);
             HttpContext.Session.SetString("UserName", $"{user.FirstName} {user.LastName}");
+            
+            // Format profile picture as data URL if it exists
+            if (!string.IsNullOrEmpty(user.ProfilePicture) && !string.IsNullOrEmpty(user.ProfilePictureContentType))
+            {
+                var dataUrl = $"data:{user.ProfilePictureContentType};base64,{user.ProfilePicture}";
+                HttpContext.Session.SetString("UserProfilePicture", dataUrl);
+            }
+            else
+            {
+                HttpContext.Session.SetString("UserProfilePicture", string.Empty);
+            }
 
             TempData["Success"] = "Login successful!";
             return RedirectToAction("Index", "Dashboard");
@@ -68,7 +79,7 @@ namespace task_management_system.Controllers
                 return View(model);
             }
 
-            var result = await _authService.RegisterAsync(model.Email, model.Password, model.FirstName, model.LastName);
+            var result = await _authService.RegisterAsync(model.Email, model.Password, model.FirstName, model.LastName, model.DateOfBirth, model.Address);
 
             if (!result.success)
             {
@@ -131,6 +142,17 @@ namespace task_management_system.Controllers
                 HttpContext.Session.SetString("UserId", user.Id);
                 HttpContext.Session.SetString("UserEmail", user.Email);
                 HttpContext.Session.SetString("UserName", $"{user.FirstName} {user.LastName}");
+                
+                // Format profile picture as data URL if it exists
+                if (!string.IsNullOrEmpty(user.ProfilePicture) && !string.IsNullOrEmpty(user.ProfilePictureContentType))
+                {
+                    var dataUrl = $"data:{user.ProfilePictureContentType};base64,{user.ProfilePicture}";
+                    HttpContext.Session.SetString("UserProfilePicture", dataUrl);
+                }
+                else
+                {
+                    HttpContext.Session.SetString("UserProfilePicture", string.Empty);
+                }
 
                 // Redirect to welcome page with modal
                 TempData["ShowWelcomeModal"] = true;

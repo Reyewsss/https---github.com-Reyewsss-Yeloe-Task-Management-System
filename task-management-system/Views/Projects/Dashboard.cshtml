@@ -12,13 +12,22 @@
 <!-- Project Dashboard Header -->
 <div class="dashboard-header">
     <div class="header-left">
-        <a href="@Url.Action("Index", "Projects")" class="back-link">
-            <i class="fas fa-arrow-left"></i> Back to Projects
-        </a>
         <h1><i class="fas fa-folder-open"></i> @Model.Name</h1>
         <p>@Model.Description</p>
     </div>
     <div class="header-right">
+        @if (ViewBag.IsProjectOwner == true)
+        {
+            <span class="user-role-badge owner">
+                <i class="fas fa-crown"></i> Project Owner
+            </span>
+        }
+        else
+        {
+            <span class="user-role-badge member">
+                <i class="fas fa-user"></i> Team Member
+            </span>
+        }
         <span class="project-status-badge @Model.Status.ToString().ToLower()">@Model.Status</span>
         <span class="project-priority-badge @Model.Priority.ToString().ToLower()">@Model.Priority Priority</span>
     </div>
@@ -170,9 +179,12 @@
             @foreach (var task in tasks.OrderByDescending(t => t.CreatedAt))
             {
                 <div class="task-list-item @(task.IsCompleted ? "completed" : "")" data-id="@task.Id">
-                    <div class="task-checkbox">
-                        <input type="checkbox" @(task.IsCompleted ? "checked" : "")>
-                    </div>
+                    @if (ViewBag.IsProjectOwner == true)
+                    {
+                        <div class="task-checkbox">
+                            <input type="checkbox" @(task.IsCompleted ? "checked" : "")>
+                        </div>
+                    }
                     <div class="task-info">
                         <h4>@task.Title</h4>
                         <p>@task.Description</p>
@@ -220,9 +232,12 @@
     <div class="team-container">
         <div class="team-header">
             <h3><i class="fas fa-users"></i> Team Members</h3>
-            <button class="btn btn-primary btn-sm" id="addMemberBtn">
-                <i class="fas fa-user-plus"></i> Add Member
-            </button>
+            @if (ViewBag.IsProjectOwner == true)
+            {
+                <button class="btn btn-primary btn-sm" id="addMemberBtn">
+                    <i class="fas fa-user-plus"></i> Add Member
+                </button>
+            }
         </div>
         <div class="team-members" id="teamMembersList">
             <!-- Project Owner -->
@@ -253,9 +268,12 @@
                         </div>
                         <div class="member-actions">
                             <span class="member-role @member.Role.ToString().ToLower()">@member.Role</span>
-                            <button class="btn-remove-member" title="Remove member" onclick="removeMember('@member.UserId', '@member.UserName')">
-                                <i class="fas fa-times"></i>
-                            </button>
+                            @if (ViewBag.IsProjectOwner == true)
+                            {
+                                <button class="btn-remove-member" title="Remove member" onclick="removeMember('@member.UserId', '@member.UserName')">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            }
                         </div>
                     </div>
                 }

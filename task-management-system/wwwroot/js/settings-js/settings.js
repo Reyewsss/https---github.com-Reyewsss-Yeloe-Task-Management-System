@@ -11,7 +11,12 @@ function initializeSettings() {
     // Dark Mode Toggle
     $('#darkMode').on('change', function() {
         const isDarkMode = $(this).is(':checked');
-        setDarkMode(isDarkMode);
+        // Use the global toggleDarkMode function if available
+        if (typeof window.toggleDarkMode === 'function') {
+            window.toggleDarkMode(isDarkMode);
+        } else {
+            setDarkMode(isDarkMode);
+        }
         savePreference('darkMode', isDarkMode);
         showSettingsAlert('Dark mode ' + (isDarkMode ? 'enabled' : 'disabled'), 'success');
     });
@@ -84,9 +89,11 @@ function savePreference(key, value) {
 // Set dark mode
 function setDarkMode(enabled) {
     if (enabled) {
+        document.documentElement.setAttribute('data-theme', 'dark');
         document.body.classList.add('dark-mode');
         localStorage.setItem('darkMode', 'true');
     } else {
+        document.documentElement.setAttribute('data-theme', 'light');
         document.body.classList.remove('dark-mode');
         localStorage.setItem('darkMode', 'false');
     }

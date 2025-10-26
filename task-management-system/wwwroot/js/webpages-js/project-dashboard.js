@@ -24,8 +24,65 @@ function initializeDashboard() {
         });
     });
 
+    // Initialize task checkboxes
+    initializeTaskCheckboxes();
+
     // Initialize Kanban drag and drop (future enhancement)
     initializeKanban();
+}
+
+function initializeTaskCheckboxes() {
+    const checkboxes = document.querySelectorAll('.task-checkbox input[type="checkbox"]');
+    
+    checkboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', async function() {
+            const taskItem = this.closest('.task-list-item');
+            const taskId = taskItem.getAttribute('data-id');
+            
+            if (taskId) {
+                await toggleTaskComplete(taskId, this.checked);
+            }
+        });
+    });
+}
+
+async function toggleTaskComplete(taskId, isChecked) {
+    try {
+        // You'll need to add this URL to the view's script section
+        const response = await fetch('/Task/Complete', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ taskId: taskId })
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            showAlert('Task status updated successfully!', 'success');
+            
+            // Reload page after a short delay to reflect status changes
+            setTimeout(() => {
+                window.location.reload();
+            }, 1000);
+        } else {
+            showAlert(result.message || 'Failed to update task', 'error');
+            // Revert checkbox
+            const checkbox = document.querySelector(`.task-list-item[data-id="${taskId}"] input[type="checkbox"]`);
+            if (checkbox) {
+                checkbox.checked = !isChecked;
+            }
+        }
+    } catch (error) {
+        console.error('Error updating task:', error);
+        showAlert('An error occurred while updating the task', 'error');
+        // Revert checkbox
+        const checkbox = document.querySelector(`.task-list-item[data-id="${taskId}"] input[type="checkbox"]`);
+        if (checkbox) {
+            checkbox.checked = !isChecked;
+        }
+    }
 }
 
 function initializeInvitationModal() {

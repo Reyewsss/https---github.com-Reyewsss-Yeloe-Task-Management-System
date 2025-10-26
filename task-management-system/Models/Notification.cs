@@ -28,6 +28,9 @@ namespace task_management_system.Models
         TeamMemberJoined,
         SystemUpdate,
         PasswordReset, 
-        General
+        General,
+        Reminder,
+        Warning,
+        Alert
     }
 }

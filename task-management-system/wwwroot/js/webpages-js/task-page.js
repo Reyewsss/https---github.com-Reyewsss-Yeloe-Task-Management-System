@@ -234,6 +234,18 @@ function closeTaskModal() {
         createTaskForm.reset();
         clearErrors();
         
+        // Clear time inputs
+        document.getElementById('taskHour').value = '';
+        document.getElementById('taskMinute').value = '';
+        document.getElementById('taskPeriod').value = 'PM';
+        
+        // Hide time section
+        const timeSection = document.getElementById('timeInputSection');
+        if (timeSection) {
+            timeSection.style.display = 'none';
+            timeSection.style.opacity = '0';
+        }
+        
         // Clear edit mode
         delete createTaskForm.dataset.taskId;
         delete createTaskForm.dataset.mode;
@@ -283,11 +295,15 @@ async function handleCreateTask() {
     else if (priorityValue === 'Medium') priorityInt = 1;
     else if (priorityValue === 'High') priorityInt = 2;
     
+    // Combine date and time if available
+    const combinedDateTime = window.combineDateAndTime ? window.combineDateAndTime() : (document.getElementById('taskDueDate').value || null);
+    
     const formData = {
         title: document.getElementById('taskTitle').value.trim(),
         description: document.getElementById('taskDescription').value.trim(),
         project: projectValue,
-        dueDate: document.getElementById('taskDueDate').value || null,
+        assignedTo: document.getElementById('taskAssignedTo')?.value || null,
+        dueDate: combinedDateTime,
         priority: priorityInt // Send as integer (0, 1, 2)
     };
     
@@ -391,20 +407,10 @@ async function toggleTaskComplete(taskId) {
         if (result.success) {
             showNotification('Success!', result.message, 'success');
             
-            // Update task item visually
-            const taskItem = document.querySelector(`.task-item[data-id="${taskId}"]`);
-            if (taskItem) {
-                const taskContent = taskItem.querySelector('.task-content');
-                const checkbox = taskItem.querySelector('input[type="checkbox"]');
-                
-                if (checkbox.checked) {
-                    taskContent.classList.add('completed');
-                    taskItem.setAttribute('data-status', 'completed');
-                } else {
-                    taskContent.classList.remove('completed');
-                    taskItem.setAttribute('data-status', 'pending');
-                }
-            }
+            // Reload page after a short delay to reflect status changes
+            setTimeout(() => {
+                window.location.reload();
+            }, 1000);
         } else {
             showNotification('Error', result.message || 'Failed to update task', 'error');
             // Revert checkbox state
@@ -474,6 +480,124 @@ async function deleteTask(taskId) {
     }
 }
 
+// Assign task function
+async function assignTask(taskId) {
+    try {
+        console.log('=== ASSIGN TASK START ===');
+        console.log('Task ID:', taskId);
+        
+        // Get task details first
+        console.log('Fetching task details from:', `${window.taskUrls.getTaskUrl}?id=${taskId}`);
+        const response = await fetch(`${window.taskUrls.getTaskUrl}?id=${taskId}`);
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const result = await response.json();
+        console.log('Task details response:', result);
+
+        if (!result.success) {
+            showNotification('Error', result.message || 'Failed to load task', 'error');
+            return;
+        }
+
+        const task = result.task;
+        console.log('Task object:', task);
+        
+        // Check if task has a project
+        if (!task.project || task.project.trim() === '') {
+            showNotification('Info', 'Please assign this task to a project first before assigning to a member.', 'info');
+            return;
+        }
+
+        // Load project members
+        console.log('Fetching members from:', `${window.taskUrls.getProjectMembersUrl}?projectName=${encodeURIComponent(task.project)}`);
+        const membersResponse = await fetch(`${window.taskUrls.getProjectMembersUrl}?projectName=${encodeURIComponent(task.project)}`);
+        
+        if (!membersResponse.ok) {
+            throw new Error(`HTTP error! status: ${membersResponse.status}`);
+        }
+        
+        const membersResult = await membersResponse.json();
+        console.log('Members response:', membersResult);
+
+        if (!membersResult.success) {
+            showNotification('Error', membersResult.message || 'Failed to load project members', 'error');
+            return;
+        }
+
+        if (!membersResult.members || membersResult.members.length === 0) {
+            showNotification('Info', 'No members found in this project. Invite members to the project first.', 'info');
+            return;
+        }
+
+        // Create member selection options
+        let memberOptions = '<option value="">-- Unassign Task --</option>';
+        membersResult.members.forEach(member => {
+            const selected = member.userId === task.assignedTo ? 'selected' : '';
+            memberOptions += `<option value="${member.userId}" ${selected}>${member.userName} (${member.role})</option>`;
+        });
+
+        // Show assignment dialog - now returns the selected value or null
+        const selectedMember = await showAssignDialog(
+            'Assign Task',
+            `<div style="margin-bottom: 15px;">
+                <strong>Task:</strong> ${task.title}<br>
+                <strong>Project:</strong> ${task.project}
+            </div>
+            <label style="display: block; margin-bottom: 8px; font-weight: 600;">Assign to:</label>
+            <select id="assignMemberSelect" style="width: 100%; padding: 10px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 1rem;">
+                ${memberOptions}
+            </select>`,
+            'Assign',
+            'Cancel'
+        );
+
+        console.log('Selected member from dialog:', selectedMember);
+        if (selectedMember === null) {
+            console.log('Dialog was cancelled');
+            return;
+        }
+        
+        // Update task assignment
+        const updatePayload = {
+            taskId: taskId,
+            title: task.title,
+            description: task.description,
+            project: task.project,
+            assignedTo: selectedMember || null,
+            dueDate: task.dueDate,
+            priority: task.priority === 'Low' ? 0 : task.priority === 'Medium' ? 1 : 2
+        };
+        console.log('Update payload:', updatePayload);
+        
+        const updateResponse = await fetch(window.taskUrls.updateUrl, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(updatePayload)
+        });
+
+        const updateResult = await updateResponse.json();
+        console.log('Update result:', updateResult);
+
+        if (updateResult.success) {
+            showNotification('Success!', selectedMember ? 'Task assigned successfully!' : 'Task unassigned successfully!', 'success');
+            // Reload page to show updated assignment
+            setTimeout(() => window.location.reload(), 1000);
+        } else {
+            showNotification('Error', updateResult.message || 'Failed to assign task', 'error');
+        }
+
+    } catch (error) {
+        console.error('Error assigning task:', error);
+        console.error('Error stack:', error.stack);
+        showNotification('Error', `An unexpected error occurred: ${error.message}`, 'error');
+    }
+}
+
 // Edit task - Load task data and open modal in edit mode
 async function editTask(taskId) {
     try {
@@ -491,7 +615,46 @@ async function editTask(taskId) {
         // Populate the form with task data
         document.getElementById('taskTitle').value = task.title || '';
         document.getElementById('taskDescription').value = task.description || '';
-        document.getElementById('taskDueDate').value = task.dueDate || '';
+        
+        // Handle date and time population
+        if (task.dueDate) {
+            const dueDateTime = new Date(task.dueDate);
+            
+            // Set date (YYYY-MM-DD format)
+            const year = dueDateTime.getFullYear();
+            const month = String(dueDateTime.getMonth() + 1).padStart(2, '0');
+            const day = String(dueDateTime.getDate()).padStart(2, '0');
+            const dateString = `${year}-${month}-${day}`;
+            
+            document.getElementById('taskDueDate').value = dateString;
+            
+            // Show time section
+            const timeSection = document.getElementById('timeInputSection');
+            if (timeSection) {
+                timeSection.style.display = 'block';
+                timeSection.style.opacity = '1';
+                timeSection.style.transform = 'translateY(0)';
+            }
+            
+            // Set time values
+            let hours = dueDateTime.getHours();
+            const minutes = String(dueDateTime.getMinutes()).padStart(2, '0');
+            const period = hours >= 12 ? 'PM' : 'AM';
+            
+            // Convert to 12-hour format
+            if (hours === 0) {
+                hours = 12;
+            } else if (hours > 12) {
+                hours -= 12;
+            }
+            
+            document.getElementById('taskHour').value = hours;
+            document.getElementById('taskMinute').value = minutes;
+            document.getElementById('taskPeriod').value = period;
+        } else {
+            document.getElementById('taskDueDate').value = '';
+        }
+        
         document.getElementById('taskPriority').value = task.priority || 'Medium';
 
         // Handle project selection
@@ -680,6 +843,97 @@ function showConfirmDialog(title, message, confirmText, cancelText) {
             if (e.target === overlay) {
                 overlay.remove();
                 resolve(false);
+            }
+        });
+    });
+}
+
+// Show assignment dialog
+function showAssignDialog(title, message, confirmText, cancelText) {
+    return new Promise((resolve) => {
+        // Create overlay
+        const overlay = document.createElement('div');
+        overlay.className = 'notification-modal-overlay show';
+        overlay.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+            backdrop-filter: blur(4px);
+        `;
+        
+        // Create modal
+        const modal = document.createElement('div');
+        modal.style.cssText = `
+            background: white;
+            border-radius: 12px;
+            padding: 2rem;
+            max-width: 500px;
+            width: 90%;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        `;
+        
+        modal.innerHTML = `
+            <div style="margin-bottom: 1.5rem;">
+                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 1rem;">
+                    <h3 style="margin: 0; color: #333; font-weight: 600;">${title}</h3>
+                </div>
+                <div>${message}</div>
+            </div>
+            <div style="display: flex; gap: 1rem; justify-content: flex-end;">
+                <button class="cancel-btn" style="
+                    padding: 0.75rem 1.5rem;
+                    border: 2px solid #ddd;
+                    background: white;
+                    color: #333;
+                    border-radius: 8px;
+                    font-weight: 600;
+                    cursor: pointer;
+                    transition: all 0.3s ease;
+                ">${cancelText}</button>
+                <button class="confirm-btn" style="
+                    padding: 0.75rem 1.5rem;
+                    border: none;
+                    background: #6A4018;
+                    color: white;
+                    border-radius: 8px;
+                    font-weight: 600;
+                    cursor: pointer;
+                    transition: all 0.3s ease;
+                ">${confirmText}</button>
+            </div>
+        `;
+        
+        overlay.appendChild(modal);
+        document.body.appendChild(overlay);
+        
+        // Handle buttons
+        const cancelBtn = modal.querySelector('.cancel-btn');
+        const confirmBtn = modal.querySelector('.confirm-btn');
+        
+        cancelBtn.addEventListener('click', () => {
+            overlay.remove();
+            resolve(null); // Return null when cancelled
+        });
+        
+        confirmBtn.addEventListener('click', () => {
+            // Get the selected value BEFORE removing the dialog
+            const selectElement = document.getElementById('assignMemberSelect');
+            const selectedValue = selectElement ? selectElement.value : '';
+            overlay.remove();
+            resolve(selectedValue); // Return the selected value
+        });
+        
+        overlay.addEventListener('click', (e) => {
+            if (e.target === overlay) {
+                overlay.remove();
+                resolve(null); // Return null when clicking outside
             }
         });
     });

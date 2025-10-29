@@ -1102,6 +1102,18 @@ body.dashboard-body {
 
 .nav-link.active {
     background: var(--gray-light);
+    color: var(--primary-color);
+    box-shadow: 0 4px 12px rgba(106, 64, 24, 0.2);
+    transform: translateX(4px);
+}
+
+.nav-link.active i {
+    color: var(--primary-color);
+}
+
+.nav-link.active .nav-text {
+    color: var(--primary-color);
+    font-weight: 600;
 }
 
 .nav-link i {
@@ -1109,6 +1121,7 @@ body.dashboard-body {
     width: 24px;
     margin-right: 1rem;
     color: var(--primary-color);
+    transition: var(--transition);
 }
 
 .nav-text {

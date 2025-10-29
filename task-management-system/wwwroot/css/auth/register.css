@@ -1,0 +1,114 @@
+/* Terms agreement checkbox styling */
+.form-check {
+    margin-left: 15px;
+    padding: 0.75rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+}
+
+.form-check-input {
+    width: 1.2rem;
+    height: 1.2rem;
+    margin-top: 0.1rem;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+.form-check-label {
+    margin-left: 0.5rem;
+    font-size: 1.0rem;
+    cursor: pointer;
+    user-select: none;
+}
+
+.form-check-input:checked {
+    background-color: #4CAF50;
+    border-color: #4CAF50;
+}
+
+.form-check-label .auth-link {
+    font-weight: 600;
+    text-decoration: underline;
+}
+
+.form-check-label .auth-link:hover {
+    text-decoration: none;
+}
+
+/* Address picker suggestions */
+.address-suggestions {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: white;
+    border: 1px solid #dee2e6;
+    border-top: none;
+    border-radius: 0 0 8px 8px;
+    max-height: 250px;
+    overflow-y: auto;
+    z-index: 1000;
+    display: none;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.suggestion-item {
+    padding: 12px 16px;
+    cursor: pointer;
+    border-bottom: 1px solid #f0f0f0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    transition: background-color 0.2s;
+}
+
+.suggestion-item:hover {
+    background-color: #f8f9fa;
+}
+
+.suggestion-item:last-child {
+    border-bottom: none;
+}
+
+.suggestion-item.loading,
+.suggestion-item.no-results,
+.suggestion-item.error {
+    color: #6c757d;
+    cursor: default;
+    justify-content: center;
+}
+
+.suggestion-item.loading:hover,
+.suggestion-item.no-results:hover,
+.suggestion-item.error:hover {
+    background-color: white;
+}
+
+.suggestion-item i {
+    color: #4CAF50;
+    font-size: 14px;
+    flex-shrink: 0;
+}
+
+.suggestion-item span {
+    flex: 1;
+    font-size: 14px;
+    color: #333;
+}
+
+/* Map styling */
+#map {
+    cursor: crosshair;
+    z-index: 1;
+}
+
+.leaflet-container {
+    font-family: inherit;
+    background: #f0f0f0;
+}
+
+.leaflet-control-attribution {
+    font-size: 10px;
+}

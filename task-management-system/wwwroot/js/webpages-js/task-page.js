@@ -995,3 +995,4 @@ document.head.appendChild(style);
 window.toggleTaskComplete = toggleTaskComplete;
 window.deleteTask = deleteTask;
 window.editTask = editTask;
+window.assignTask = assignTask;

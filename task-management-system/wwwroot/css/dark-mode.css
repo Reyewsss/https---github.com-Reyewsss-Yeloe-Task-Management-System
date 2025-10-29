@@ -57,13 +57,23 @@ body.dashboard-body.dark-mode .nav-link {
 }
 
 body.dashboard-body.dark-mode .nav-link:hover {
-    background: var(--gray-light);
-    color: var(--primary-color);
+    background: rgba(106, 64, 24, 0.1);
+    color: var(--primary-light);
 }
 
 body.dashboard-body.dark-mode .nav-link.active {
     background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-light) 100%);
-    color: var(--bg-darker);
+    color: #ffffff;
+    box-shadow: 0 4px 12px rgba(106, 64, 24, 0.3);
+}
+
+body.dashboard-body.dark-mode .nav-link.active i {
+    color: #ffffff;
+}
+
+body.dashboard-body.dark-mode .nav-link.active .nav-text {
+    color: #ffffff;
+    font-weight: 600;
 }
 
 /* Top Header */

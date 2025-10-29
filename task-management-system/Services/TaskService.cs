@@ -217,10 +217,26 @@ namespace task_management_system.Services
                 Builders<AddTask>.Filter.Eq(t => t.UserId, userId)
             );
 
+            // Get assigned user's name if AssignedTo is provided
+            string? assignedToName = null;
+            if (!string.IsNullOrEmpty(model.AssignedTo))
+            {
+                var assignedUser = await _context.Users
+                    .Find(u => u.Id == model.AssignedTo)
+                    .FirstOrDefaultAsync();
+                
+                if (assignedUser != null)
+                {
+                    assignedToName = $"{assignedUser.FirstName} {assignedUser.LastName}";
+                }
+            }
+
             var update = Builders<AddTask>.Update
                 .Set(t => t.Title, model.Title)
                 .Set(t => t.Description, model.Description)
                 .Set(t => t.Project, model.Project)
+                .Set(t => t.AssignedTo, model.AssignedTo)
+                .Set(t => t.AssignedToName, assignedToName)
                 .Set(t => t.DueDate, model.DueDate)
                 .Set(t => t.Priority, model.Priority)
                 .Set(t => t.UpdatedAt, DateTime.UtcNow);

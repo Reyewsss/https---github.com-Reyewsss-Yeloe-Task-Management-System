@@ -706,57 +706,82 @@ function showEmptyState() {
 
 // Notification system
 function showNotification(title, message, type = 'info') {
+    // Remove existing notifications
+    const existingNotification = document.querySelector('.notification');
+    if (existingNotification) {
+        existingNotification.remove();
+    }
+
     // Create notification element
     const notification = document.createElement('div');
     notification.className = `notification notification-${type}`;
     notification.style.cssText = `
         position: fixed;
-        top: 20px;
+        bottom: 20px;
         right: 20px;
-        background: white;
-        padding: 1rem 1.5rem;
-        border-radius: 8px;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        padding: 10px 14px;
+        border-radius: 6px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.15);
         z-index: 10000;
-        min-width: 300px;
-        max-width: 500px;
-        animation: slideIn 0.3s ease;
+        max-width: 280px;
+        font-size: 0.875rem;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        opacity: 0;
+        transform: translateY(10px);
+        transition: all 0.3s ease;
     `;
     
-    // Set icon based on type
+    // Set icon and colors based on type
     let icon = 'fa-info-circle';
-    let iconColor = '#2196F3';
+    let bgColor = '#d1ecf1';
+    let textColor = '#0c5460';
+    let borderColor = '#17a2b8';
     
     if (type === 'success') {
         icon = 'fa-check-circle';
-        iconColor = '#4CAF50';
+        bgColor = '#d4edda';
+        textColor = '#155724';
+        borderColor = '#28a745';
     } else if (type === 'error') {
         icon = 'fa-exclamation-circle';
-        iconColor = '#F44336';
+        bgColor = '#f8d7da';
+        textColor = '#721c24';
+        borderColor = '#dc3545';
     } else if (type === 'warning') {
         icon = 'fa-exclamation-triangle';
-        iconColor = '#FF9800';
+        bgColor = '#fff3cd';
+        textColor = '#856404';
+        borderColor = '#ffc107';
     }
     
+    notification.style.background = bgColor;
+    notification.style.color = textColor;
+    notification.style.borderLeft = `3px solid ${borderColor}`;
+    
     notification.innerHTML = `
-        <div style="display: flex; align-items: start; gap: 1rem;">
-            <i class="fas ${icon}" style="color: ${iconColor}; font-size: 1.5rem; margin-top: 2px;"></i>
-            <div style="flex: 1;">
-                <h4 style="margin: 0 0 0.25rem 0; font-weight: 600; color: #333;">${title}</h4>
-                <p style="margin: 0; color: #666; font-size: 0.9rem;">${message}</p>
-            </div>
-            <button onclick="this.parentElement.parentElement.remove()" 
-                    style="background: none; border: none; color: #999; cursor: pointer; font-size: 1.2rem; padding: 0; line-height: 1;">
-                ×
-            </button>
-        </div>
+        <i class="fas ${icon}" style="color: ${borderColor}; font-size: 1rem; flex-shrink: 0;"></i>
+        <span style="flex: 1; line-height: 1.4;">${message}</span>
+        <button onclick="this.parentElement.remove()" 
+                style="background: none; border: none; color: inherit; opacity: 0.7; cursor: pointer; font-size: 0.875rem; padding: 0; margin-left: 4px; transition: opacity 0.2s;"
+                onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.7'">
+            <i class="fas fa-times"></i>
+        </button>
     `;
     
     document.body.appendChild(notification);
     
+    // Show notification
+    setTimeout(() => {
+        notification.style.opacity = '1';
+        notification.style.transform = 'translateY(0)';
+    }, 10);
+    
     // Auto remove after 5 seconds
     setTimeout(() => {
-        notification.style.animation = 'slideOut 0.3s ease';
+        notification.style.opacity = '0';
+        notification.style.transform = 'translateY(10px)';
         setTimeout(() => notification.remove(), 300);
     }, 5000);
 }

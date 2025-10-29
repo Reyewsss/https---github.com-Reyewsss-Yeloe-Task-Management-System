@@ -54,8 +54,6 @@ namespace task_management_system.Controllers
             {
                 HttpContext.Session.SetString("UserProfilePicture", string.Empty);
             }
-
-            TempData["Success"] = "Login successful!";
             return RedirectToAction("Index", "Dashboard");
         }
 

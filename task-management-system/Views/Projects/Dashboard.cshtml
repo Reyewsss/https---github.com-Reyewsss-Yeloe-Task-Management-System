@@ -243,7 +243,14 @@
             <!-- Project Owner -->
             <div class="team-member">
                 <div class="member-avatar">
-                    <i class="fas fa-user-crown"></i>
+                    @if (!string.IsNullOrEmpty(ViewBag.UserProfilePicture))
+                    {
+                        <img src="@ViewBag.UserProfilePicture" alt="Profile" class="member-avatar-img" />
+                    }
+                    else
+                    {
+                        <i class="fas fa-user-crown"></i>
+                    }
                 </div>
                 <div class="member-info">
                     <h4>@ViewBag.UserName</h4>
@@ -259,7 +266,14 @@
                 {
                     <div class="team-member" data-member-id="@member.UserId">
                         <div class="member-avatar">
-                            <i class="fas fa-user"></i>
+                            @if (!string.IsNullOrEmpty(member.ProfilePicture))
+                            {
+                                <img src="@member.ProfilePicture" alt="@member.UserName" class="member-avatar-img" />
+                            }
+                            else
+                            {
+                                <i class="fas fa-user"></i>
+                            }
                         </div>
                         <div class="member-info">
                             <h4>@member.UserName</h4>

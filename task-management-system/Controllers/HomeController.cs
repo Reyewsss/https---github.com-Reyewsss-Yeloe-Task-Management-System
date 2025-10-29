@@ -16,7 +16,6 @@ namespace task_management_system.Controllers
 
         public IActionResult Index()
         {
-            // Check if user is already logged in
             var userId = HttpContext.Session.GetString("UserId");
             
             if (!string.IsNullOrEmpty(userId))
@@ -28,7 +27,6 @@ namespace task_management_system.Controllers
             return View();
         }
 
-        // Error handling action
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
         public IActionResult Error()
         {
@@ -36,9 +34,9 @@ namespace task_management_system.Controllers
         }
 
         [HttpPost]
-        public IActionResult RedirectToRegister()
+        public IActionResult RedirectToLogin()
         {
-            return RedirectToAction("Register", "Auth");
+            return RedirectToAction("Login", "Auth");
         }
     }
 }

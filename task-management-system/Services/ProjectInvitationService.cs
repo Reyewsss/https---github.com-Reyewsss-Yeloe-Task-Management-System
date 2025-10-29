@@ -177,6 +177,21 @@ namespace task_management_system.Services
                 userName = user.Email.Split('@')[0];
             }
 
+            // Format profile picture as data URL if exists
+            string? profilePicture = null;
+            if (user != null && !string.IsNullOrEmpty(user.ProfilePicture))
+            {
+                if (!user.ProfilePicture.StartsWith("data:"))
+                {
+                    var contentType = user.ProfilePictureContentType ?? "image/jpeg";
+                    profilePicture = $"data:{contentType};base64,{user.ProfilePicture}";
+                }
+                else
+                {
+                    profilePicture = user.ProfilePicture;
+                }
+            }
+
             // Add user as project member
             var member = new ProjectMember
             {
@@ -184,6 +199,7 @@ namespace task_management_system.Services
                 UserId = userId,
                 UserEmail = invitation.InvitedUserEmail,
                 UserName = userName,
+                ProfilePicture = profilePicture,
                 Role = invitation.Role,
                 JoinedAt = DateTime.UtcNow,
                 AddedByUserId = invitation.InvitedByUserId
@@ -227,6 +243,28 @@ namespace task_management_system.Services
                 .Find(m => m.ProjectId == projectId)
                 .SortBy(m => m.JoinedAt)
                 .ToListAsync();
+
+            // Fetch profile pictures for each member
+            foreach (var member in members)
+            {
+                var user = await _context.Users
+                    .Find(u => u.Id == member.UserId)
+                    .FirstOrDefaultAsync();
+                
+                if (user != null && !string.IsNullOrEmpty(user.ProfilePicture))
+                {
+                    // Format as data URL if not already formatted
+                    if (!user.ProfilePicture.StartsWith("data:"))
+                    {
+                        var contentType = user.ProfilePictureContentType ?? "image/jpeg";
+                        member.ProfilePicture = $"data:{contentType};base64,{user.ProfilePicture}";
+                    }
+                    else
+                    {
+                        member.ProfilePicture = user.ProfilePicture;
+                    }
+                }
+            }
 
             return members;
         }

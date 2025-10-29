@@ -15,7 +15,7 @@ namespace task_management_system.Services
         Task<bool> ValidatePasswordResetTokenAsync(string email, string token);
         Task<User?> GetUserByEmailAsync(string email);
         Task<User?> GetUserByIdAsync(string userId);
-        Task<(bool success, string message)> UpdateProfileAsync(string userId, string firstName, string lastName, string email);
+        Task<(bool success, string message)> UpdateProfileAsync(string userId, string firstName, string lastName, string email, int age, string address);
         Task<(bool success, string message)> UpdateProfilePictureAsync(string userId, string base64Image, string contentType);
         Task<(bool success, string message)> ChangePasswordAsync(string userId, string currentPassword, string newPassword);
     }
@@ -282,7 +282,7 @@ namespace task_management_system.Services
             }
         }
 
-        public async Task<(bool success, string message)> UpdateProfileAsync(string userId, string firstName, string lastName, string email)
+        public async Task<(bool success, string message)> UpdateProfileAsync(string userId, string firstName, string lastName, string email, int age, string address)
         {
             try
             {
@@ -308,7 +308,9 @@ namespace task_management_system.Services
                 var update = Builders<User>.Update
                     .Set(u => u.FirstName, firstName)
                     .Set(u => u.LastName, lastName)
-                    .Set(u => u.Email, email);
+                    .Set(u => u.Email, email)
+                    .Set(u => u.Age, age)
+                    .Set(u => u.Address, address);
 
                 var result = await _context.Users.UpdateOneAsync(
                     u => u.Id == userId,

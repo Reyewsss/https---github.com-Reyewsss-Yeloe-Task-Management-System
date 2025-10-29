@@ -97,3 +97,4 @@ C:\Yeloe Task System\task-management-system\obj\Debug\net8.0\refint\task-managem
 C:\Yeloe Task System\task-management-system\obj\Debug\net8.0\task-management-system.pdb
 C:\Yeloe Task System\task-management-system\obj\Debug\net8.0\task-management-system.genruntimeconfig.cache
 C:\Yeloe Task System\task-management-system\obj\Debug\net8.0\ref\task-management-system.dll
+C:\Yeloe Task System\task-management-system\obj\Debug\net8.0\task-management-system.sourcelink.json

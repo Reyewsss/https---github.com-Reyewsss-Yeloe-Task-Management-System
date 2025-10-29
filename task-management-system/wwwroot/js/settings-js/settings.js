@@ -108,15 +108,15 @@ function showSettingsAlert(message, type) {
     const iconClass = type === 'success' ? 'fa-check-circle' : type === 'error' ? 'fa-exclamation-circle' : 'fa-info-circle';
 
     const alert = $(`
-        <div class="settings-alert alert ${alertClass} alert-dismissible fade show" role="alert">
+        <div class="settings-alert alert ${alertClass} alert-dismissible fade show position-fixed" role="alert" style="bottom: 20px; right: 20px; z-index: 9999; min-width: 300px;">
             <i class="fas ${iconClass}"></i>
             ${message}
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
     `);
 
-    // Insert at the top of the preferences card
-    $('.account-card .card-content').prepend(alert);
+    // Append to body instead of prepending to card
+    $('body').append(alert);
 
     // Auto-dismiss after 3 seconds
     setTimeout(() => {

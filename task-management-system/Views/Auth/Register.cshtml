@@ -8,6 +8,8 @@
 @model task_management_system.ViewModels.RegisterViewModel
 
 <link rel="stylesheet" href="~/css/auth/custom-modal.css" asp-append-version="true" />
+<!-- Leaflet CSS -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 
 <div class="auth-header">
     <img src="/images/logo/yeloe-logo.png" alt="Yeloe Logo" class="auth-logo">
@@ -43,8 +45,35 @@
     </div>
 
     <div class="form-group">
-        <label asp-for="Address" class="form-label">Address (optional)</label>
-        <input asp-for="Address" class="form-control" placeholder="Enter your address" />
+        <label asp-for="Address" class="form-label">Address</label>
+        <div class="address-picker-container">
+            <div class="alert alert-info d-flex align-items-center mb-2" style="font-size: 0.9rem; padding: 8px 12px;">
+                <i class="fas fa-info-circle me-2"></i>
+                <span>Please click on the map or search to select your exact address location.</span>
+            </div>
+            
+            <!-- Address Input with Autocomplete -->
+            <div style="position: relative;">
+                <input asp-for="Address" class="form-control mb-2" placeholder="Type to search address or click on map" 
+                       style="background-color: #ffffff;" id="addressSearchInput" autocomplete="off" />
+                <div id="addressSuggestions" class="address-suggestions"></div>
+            </div>
+            
+            <!-- Map Container -->
+            <div id="map" style="height: 350px; width: 100%; border-radius: 8px; margin-bottom: 12px; border: 1px solid #dee2e6;"></div>
+            
+            <!-- Zipcode Input -->
+            <div class="d-flex gap-2 align-items-center mb-1">
+                <input type="text" id="zipCodeInput" class="form-control" placeholder="Enter zipcode (optional)" 
+                       style="max-width: 510px;" />
+            </div>
+            <small class="text-muted d-block mb-2">
+                Please verify your zipcode as it may be incorrect sometimes.
+            </small>
+            
+            <input type="hidden" id="latitude" />
+            <input type="hidden" id="longitude" />
+        </div>
         <span asp-validation-for="Address" class="text-danger small"></span>
     </div>
 
@@ -327,4 +356,353 @@
     <script src="~/js/webpages-js/register.js" asp-append-version="true"></script>
     <script src="~/js/auth.js" asp-append-version="true"></script>
     <script src="~/js/login-register/custom-modal.js" asp-append-version="true"></script>
+    
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    
+    <script>
+        let map;
+        let marker;
+        let selectedLat = null;
+        let selectedLng = null;
+        let searchTimeout = null;
+
+        // Initialize map when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeMap();
+            initializeAddressSearch();
+        });
+
+        function initializeMap() {
+            // Default to Manila, Philippines coordinates
+            const defaultLat = 14.5995;
+            const defaultLng = 120.9842;
+
+            // Initialize the map
+            map = L.map('map').setView([defaultLat, defaultLng], 13);
+
+            // Add OpenStreetMap tiles
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+                maxZoom: 19
+            }).addTo(map);
+
+            // Try to get user's current location
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                        const userLat = position.coords.latitude;
+                        const userLng = position.coords.longitude;
+                        map.setView([userLat, userLng], 16);
+                        
+                        // Set initial marker at user's location
+                        selectedLat = userLat;
+                        selectedLng = userLng;
+                        
+                        if (marker) {
+                            marker.setLatLng([userLat, userLng]);
+                        } else {
+                            marker = L.marker([userLat, userLng], {
+                                draggable: true
+                            }).addTo(map);
+                            
+                            marker.on('dragend', function(e) {
+                                const pos = marker.getLatLng();
+                                selectedLat = pos.lat;
+                                selectedLng = pos.lng;
+                                document.getElementById('latitude').value = selectedLat;
+                                document.getElementById('longitude').value = selectedLng;
+                                updateAddressFromCoordinates();
+                            });
+                        }
+                        
+                        document.getElementById('latitude').value = userLat;
+                        document.getElementById('longitude').value = userLng;
+                        updateAddressFromCoordinates();
+                    },
+                    (error) => {
+                        console.log('Geolocation error:', error);
+                    }
+                );
+            }
+
+            // Add click event to map
+            map.on('click', function(e) {
+                selectedLat = e.latlng.lat;
+                selectedLng = e.latlng.lng;
+
+                // Remove existing marker if any
+                if (marker) {
+                    map.removeLayer(marker);
+                }
+
+                // Add new marker at clicked location
+                marker = L.marker([selectedLat, selectedLng], {
+                    draggable: true
+                }).addTo(map);
+                
+                // Update coordinates when marker is dragged
+                marker.on('dragend', function(e) {
+                    const pos = marker.getLatLng();
+                    selectedLat = pos.lat;
+                    selectedLng = pos.lng;
+                    document.getElementById('latitude').value = selectedLat;
+                    document.getElementById('longitude').value = selectedLng;
+                    updateAddressFromCoordinates();
+                });
+
+                document.getElementById('latitude').value = selectedLat;
+                document.getElementById('longitude').value = selectedLng;
+                
+                // Automatically get address
+                updateAddressFromCoordinates();
+            });
+            
+            // Listen for zipcode input changes
+            document.getElementById('zipCodeInput').addEventListener('input', function() {
+                if (selectedLat && selectedLng) {
+                    updateAddressFromZipCode();
+                }
+            });
+        }
+
+        function initializeAddressSearch() {
+            const addressInput = document.getElementById('addressSearchInput');
+            const suggestionsDiv = document.getElementById('addressSuggestions');
+
+            // Handle address input
+            addressInput.addEventListener('input', function(e) {
+                const query = e.target.value.trim();
+
+                // Clear existing timeout
+                if (searchTimeout) {
+                    clearTimeout(searchTimeout);
+                }
+
+                // Clear suggestions if query is too short
+                if (query.length < 3) {
+                    suggestionsDiv.innerHTML = '';
+                    suggestionsDiv.style.display = 'none';
+                    return;
+                }
+
+                // Debounce the search
+                searchTimeout = setTimeout(() => {
+                    searchAddress(query);
+                }, 500);
+            });
+
+            // Close suggestions when clicking outside
+            document.addEventListener('click', function(e) {
+                if (!addressInput.contains(e.target) && !suggestionsDiv.contains(e.target)) {
+                    suggestionsDiv.style.display = 'none';
+                }
+            });
+        }
+
+        async function searchAddress(query) {
+            const suggestionsDiv = document.getElementById('addressSuggestions');
+
+            try {
+                // Show loading state
+                suggestionsDiv.innerHTML = '<div class="suggestion-item loading">Searching...</div>';
+                suggestionsDiv.style.display = 'block';
+
+                // Use Nominatim search API
+                const response = await fetch(
+                    `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5&addressdetails=1`,
+                    {
+                        headers: {
+                            'Accept-Language': 'en'
+                        }
+                    }
+                );
+
+                if (!response.ok) {
+                    throw new Error('Search failed');
+                }
+
+                const results = await response.json();
+
+                if (results.length === 0) {
+                    suggestionsDiv.innerHTML = '<div class="suggestion-item no-results">No addresses found</div>';
+                    return;
+                }
+
+                // Display suggestions
+                suggestionsDiv.innerHTML = results.map(result => {
+                    return `<div class="suggestion-item" data-lat="${result.lat}" data-lon="${result.lon}" data-display="${result.display_name}">
+                        <i class="fas fa-map-marker-alt"></i>
+                        <span>${result.display_name}</span>
+                    </div>`;
+                }).join('');
+
+                // Add click handlers to suggestions
+                suggestionsDiv.querySelectorAll('.suggestion-item').forEach(item => {
+                    if (!item.classList.contains('loading') && !item.classList.contains('no-results')) {
+                        item.addEventListener('click', function() {
+                            const lat = parseFloat(this.dataset.lat);
+                            const lon = parseFloat(this.dataset.lon);
+                            const displayName = this.dataset.display;
+
+                            // Update address field
+                            document.getElementById('addressSearchInput').value = displayName;
+                            document.getElementById('Address').value = displayName;
+
+                            // Update coordinates
+                            selectedLat = lat;
+                            selectedLng = lon;
+                            document.getElementById('latitude').value = lat;
+                            document.getElementById('longitude').value = lon;
+
+                            // Update map
+                            map.setView([lat, lon], 16);
+
+                            // Remove existing marker if any
+                            if (marker) {
+                                map.removeLayer(marker);
+                            }
+
+                            // Add new marker
+                            marker = L.marker([lat, lon], {
+                                draggable: true
+                            }).addTo(map);
+
+                            marker.on('dragend', function(e) {
+                                const pos = marker.getLatLng();
+                                selectedLat = pos.lat;
+                                selectedLng = pos.lng;
+                                document.getElementById('latitude').value = selectedLat;
+                                document.getElementById('longitude').value = selectedLng;
+                                updateAddressFromCoordinates();
+                            });
+
+                            // Hide suggestions
+                            suggestionsDiv.style.display = 'none';
+                        });
+                    }
+                });
+
+            } catch (error) {
+                console.error('Error searching address:', error);
+                suggestionsDiv.innerHTML = '<div class="suggestion-item error">Error searching address</div>';
+            }
+        }
+
+        async function updateAddressFromCoordinates() {
+            const lat = selectedLat;
+            const lng = selectedLng;
+
+            if (!lat || !lng) {
+                return;
+            }
+
+            try {
+                const response = await fetch(
+                    `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`,
+                    {
+                        headers: {
+                            'Accept-Language': 'en'
+                        }
+                    }
+                );
+
+                if (!response.ok) {
+                    throw new Error('Failed to get address');
+                }
+
+                const data = await response.json();
+                
+                if (data && data.display_name) {
+                    document.getElementById('addressSearchInput').value = data.display_name;
+                    document.getElementById('Address').value = data.display_name;
+                }
+            } catch (error) {
+                console.error('Error getting address:', error);
+            }
+        }
+
+        // Add custom styles for the address picker
+        const style = document.createElement('style');
+        style.textContent = `
+            .address-suggestions {
+                position: absolute;
+                top: 100%;
+                left: 0;
+                right: 0;
+                background: white;
+                border: 1px solid #dee2e6;
+                border-top: none;
+                border-radius: 0 0 8px 8px;
+                max-height: 250px;
+                overflow-y: auto;
+                z-index: 1000;
+                display: none;
+                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            }
+
+            .suggestion-item {
+                padding: 12px 16px;
+                cursor: pointer;
+                border-bottom: 1px solid #f0f0f0;
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                transition: background-color 0.2s;
+            }
+
+            .suggestion-item:hover {
+                background-color: #f8f9fa;
+            }
+
+            .suggestion-item:last-child {
+                border-bottom: none;
+            }
+
+            .suggestion-item.loading,
+            .suggestion-item.no-results,
+            .suggestion-item.error {
+                color: #6c757d;
+                cursor: default;
+                justify-content: center;
+            }
+
+            .suggestion-item.loading:hover,
+            .suggestion-item.no-results:hover,
+            .suggestion-item.error:hover {
+                background-color: white;
+            }
+
+            .suggestion-item i {
+                color: #4CAF50;
+                font-size: 14px;
+                flex-shrink: 0;
+            }
+
+            .suggestion-item span {
+                flex: 1;
+                font-size: 14px;
+                color: #333;
+            }
+
+            #map {
+                cursor: crosshair;
+                z-index: 1;
+            }
+
+            .leaflet-container {
+                font-family: inherit;
+            }
+            
+            .leaflet-control-attribution {
+                font-size: 10px;
+            }
+            
+            /* Ensure map is visible */
+            .leaflet-container {
+                background: #f0f0f0;
+            }
+        `;
+        document.head.appendChild(style);
+    </script>
 }

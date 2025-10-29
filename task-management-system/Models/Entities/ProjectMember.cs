@@ -23,6 +23,9 @@ namespace task_management_system.Models
         [BsonElement("userName")]
         public string UserName { get; set; } = string.Empty;
 
+        [BsonElement("profilePicture")]
+        public string? ProfilePicture { get; set; }
+
         [BsonElement("role")]
         public ProjectRole Role { get; set; } = ProjectRole.Viewer;
 

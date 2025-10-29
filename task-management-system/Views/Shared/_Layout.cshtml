@@ -40,8 +40,8 @@
                 </a>
                 <!-- Mobile Elements -->
                 <div class="mobile-get-started d-lg-none">
-                    <a asp-controller="Auth" asp-action="Register" class="btn unique-primary-btn btn-sm">
-                        Get Started
+                    <a asp-controller="Auth" asp-action="Login" class="btn unique-primary-btn btn-sm">
+                        Sign in
                     </a>
                 </div>
                 <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" 
@@ -61,8 +61,8 @@
                             <a class="nav-link" href="#about">About</a>
                         </li>
                         <li class="nav-item mt-3">
-                            <a asp-controller="Auth" asp-action="Register" class="btn unique-primary-btn w-100">
-                                Get Started
+                            <a asp-controller="Auth" asp-action="Login" class="btn unique-primary-btn w-100">
+                                Sign in
                             </a>
                         </li>
                     </ul>
@@ -79,9 +79,9 @@
                         </li>
                     </ul>
                     <div class="navbar-nav d-none d-lg-block">
-                        <form asp-controller="Home" asp-action="RedirectToRegister" method="post" class="d-inline">
+                        <form asp-controller="Home" asp-action="RedirectToLogin" method="post" class="d-inline">
                             <button type="submit" class="btn unique-primary-btn" id="get-started-btn">
-                                Get Started
+                                Sign in
                             </button>
                         </form>
                     </div>

@@ -22,10 +22,10 @@ namespace task_management_system.Models
         public string? Project { get; set; }
 
         [BsonElement("assignedTo")]
-        public string? AssignedTo { get; set; } // User ID of assigned member
+        public string? AssignedTo { get; set; } 
 
         [BsonElement("assignedToName")]
-        public string? AssignedToName { get; set; } // Display name of assigned member
+        public string? AssignedToName { get; set; } 
 
         [BsonElement("dueDate")]
         public DateTime? DueDate { get; set; }

@@ -203,6 +203,10 @@ function showAlert(message, type = 'info') {
     // Create alert element
     const alert = document.createElement('div');
     alert.className = `custom-alert alert-${type}`;
+    alert.style.position = 'fixed';
+    alert.style.bottom = '20px';
+    alert.style.right = '20px';
+    alert.style.zIndex = '9999';
     
     const icon = type === 'success' ? 'fa-check-circle' : 
                  type === 'error' ? 'fa-exclamation-circle' : 

@@ -21,7 +21,6 @@
                     }
                     <div class="avatar-upload-overlay" onclick="document.getElementById('profilePictureInput').click()">
                         <i class="fas fa-camera"></i>
-                        <span>Change Photo</span>
                     </div>
                 </div>
                 <input type="file" id="profilePictureInput" accept="image/*" style="display: none;" onchange="uploadProfilePicture()" />
@@ -50,6 +49,16 @@
                     <div class="detail-item">
                         <label>Email Address</label>
                         <div class="detail-value">@(Model?.Email ?? "Not set")</div>
+                    </div>
+                    <div class="detail-item">
+                        <label>Age</label>
+                        <div class="detail-value">@(Model?.Age > 0 ? Model.Age.ToString() : "Not set")</div>
+                    </div>
+                </div>
+                <div class="detail-group">
+                    <div class="detail-item">
+                        <label>Address</label>
+                        <div class="detail-value">@(Model?.Address ?? "Not set")</div>
                     </div>
                     <div class="detail-item">
                         <label>Member Since</label>
@@ -91,9 +100,19 @@
                         <input type="text" id="editLastName" name="LastName" class="form-control" value="@(Model?.LastName ?? "")" required>
                     </div>
                 </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="editEmail">Email Address</label>
+                        <input type="email" id="editEmail" name="Email" class="form-control" value="@(Model?.Email ?? "")" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="editAge">Age</label>
+                        <input type="number" id="editAge" name="Age" class="form-control" value="@(Model?.Age ?? 0)" min="0" max="150">
+                    </div>
+                </div>
                 <div class="form-group">
-                    <label for="editEmail">Email Address</label>
-                    <input type="email" id="editEmail" name="Email" class="form-control" value="@(Model?.Email ?? "")" required>
+                    <label for="editAddress">Address</label>
+                    <input type="text" id="editAddress" name="Address" class="form-control" value="@(Model?.Address ?? "")">
                 </div>
             </form>
             <div class="modal-footer">

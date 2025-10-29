@@ -107,6 +107,10 @@ function showAlert(message, type = 'info') {
     // Create alert element
     const alert = document.createElement('div');
     alert.className = `custom-alert alert-${type}`;
+    alert.style.position = 'fixed';
+    alert.style.bottom = '20px';
+    alert.style.right = '20px';
+    alert.style.zIndex = '9999';
     
     const icon = type === 'success' ? 'fa-check-circle' : 
                  type === 'error' ? 'fa-exclamation-circle' : 
@@ -118,18 +122,8 @@ function showAlert(message, type = 'info') {
         <button class="alert-close"><i class="fas fa-times"></i></button>
     `;
 
-    // Append to invitation card or body
-    const invitationCard = document.querySelector('.invitation-card');
-    if (invitationCard) {
-        invitationCard.style.position = 'relative';
-        invitationCard.appendChild(alert);
-        alert.style.position = 'absolute';
-        alert.style.top = '20px';
-        alert.style.right = '20px';
-        alert.style.left = 'auto';
-    } else {
-        document.body.appendChild(alert);
-    }
+    // Append to body
+    document.body.appendChild(alert);
 
     // Show alert
     setTimeout(() => {

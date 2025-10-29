@@ -13,17 +13,20 @@ namespace task_management_system.Controllers
         private readonly IProjectService _projectService;
         private readonly IUserSessionService _userSessionService;
         private readonly MongoDbContext _context;
+        private readonly IEncryptionService _encryptionService;
 
         public TaskController(
             ITaskService taskService, 
             IProjectService projectService, 
             IUserSessionService userSessionService,
-            MongoDbContext context)
+            MongoDbContext context,
+            IEncryptionService encryptionService)
         {
             _taskService = taskService;
             _projectService = projectService;
             _userSessionService = userSessionService;
             _context = context;
+            _encryptionService = encryptionService;
         }
 
         [HttpGet]
@@ -101,22 +104,30 @@ namespace task_management_system.Controllers
 
                 var userId = _userSessionService.GetCurrentUserId();
                 var userName = _userSessionService.GetCurrentUserName();
+                var profilePicture = _userSessionService.GetCurrentUserProfilePicture();
 
                 if (string.IsNullOrEmpty(request.Comment) || string.IsNullOrEmpty(request.TaskId))
                 {
                     return Json(new { success = false, message = "Comment and task ID are required" });
                 }
 
+                // Encrypt the comment text before storing
+                var encryptedText = _encryptionService.Encrypt(request.Comment);
+
                 var comment = new Comment
                 {
                     TaskId = request.TaskId,
                     UserId = userId ?? string.Empty,
                     UserName = userName ?? "Unknown User",
-                    Text = request.Comment,
+                    ProfilePicture = profilePicture,
+                    Text = encryptedText,
                     CreatedAt = DateTime.UtcNow
                 };
 
                 await _context.Comments.InsertOneAsync(comment);
+
+                // Decrypt for response
+                var decryptedText = _encryptionService.Decrypt(comment.Text);
 
                 return Json(new { 
                     success = true, 
@@ -124,7 +135,8 @@ namespace task_management_system.Controllers
                     comment = new {
                         id = comment.Id,
                         userName = comment.UserName,
-                        text = comment.Text,
+                        profilePicture = comment.ProfilePicture,
+                        text = decryptedText,
                         createdAt = comment.CreatedAt,
                         timeAgo = GetTimeAgo(comment.CreatedAt)
                     }
@@ -156,10 +168,37 @@ namespace task_management_system.Controllers
                     .SortByDescending(c => c.CreatedAt)
                     .ToListAsync();
 
+                // Fetch profile pictures for comments that don't have them
+                foreach (var comment in comments)
+                {
+                    if (string.IsNullOrEmpty(comment.ProfilePicture) && !string.IsNullOrEmpty(comment.UserId))
+                    {
+                        var user = await _context.Users
+                            .Find(u => u.Id == comment.UserId)
+                            .FirstOrDefaultAsync();
+
+                        if (user != null && !string.IsNullOrEmpty(user.ProfilePicture))
+                        {
+                            // Format as data URL if not already formatted
+                            if (!user.ProfilePicture.StartsWith("data:"))
+                            {
+                                var contentType = user.ProfilePictureContentType ?? "image/jpeg";
+                                comment.ProfilePicture = $"data:{contentType};base64,{user.ProfilePicture}";
+                            }
+                            else
+                            {
+                                comment.ProfilePicture = user.ProfilePicture;
+                            }
+                        }
+                    }
+                }
+
+                // Decrypt comment text before sending to client
                 var commentsData = comments.Select(c => new {
                     id = c.Id,
                     userName = c.UserName,
-                    text = c.Text,
+                    profilePicture = c.ProfilePicture,
+                    text = _encryptionService.Decrypt(c.Text),
                     createdAt = c.CreatedAt,
                     timeAgo = GetTimeAgo(c.CreatedAt)
                 }).ToList();

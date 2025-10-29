@@ -161,7 +161,9 @@
             <div class="comment-item">
                 <div class="comment-header">
                     <div class="comment-author-info">
-                        <i class="fas fa-user-circle"></i>
+                        ${comment.profilePicture 
+                            ? `<img src="${comment.profilePicture}" alt="${escapeHtml(comment.userName)}" class="comment-avatar-img" />` 
+                            : '<i class="fas fa-user-circle"></i>'}
                         <span class="comment-author">${escapeHtml(comment.userName)}</span>
                     </div>
                     <span class="comment-date">${comment.timeAgo}</span>
@@ -306,12 +308,24 @@
 
     // Utility Functions
     function showNotification(type, message) {
+        // Remove existing notifications
+        const existingNotification = document.querySelector('.notification');
+        if (existingNotification) {
+            existingNotification.remove();
+        }
+
         // Create notification element
         const notification = document.createElement('div');
         notification.className = `notification notification-${type}`;
+        
+        const icon = type === 'success' ? 'fa-check-circle' : 
+                     type === 'error' ? 'fa-exclamation-circle' : 
+                     'fa-info-circle';
+        
         notification.innerHTML = `
-            <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'}"></i>
+            <i class="fas ${icon}"></i>
             <span>${message}</span>
+            <button class="notification-close"><i class="fas fa-times"></i></button>
         `;
 
         // Add to body
@@ -322,13 +336,20 @@
             notification.classList.add('show');
         }, 10);
 
-        // Remove after 3 seconds
+        // Remove after 5 seconds
         setTimeout(() => {
             notification.classList.remove('show');
             setTimeout(() => {
                 notification.remove();
             }, 300);
-        }, 3000);
+        }, 5000);
+
+        // Close button
+        const closeBtn = notification.querySelector('.notification-close');
+        closeBtn.addEventListener('click', function() {
+            notification.classList.remove('show');
+            setTimeout(() => notification.remove(), 300);
+        });
     }
 
     function formatDate(dateString) {
@@ -545,51 +566,6 @@
         });
     };
 
-    // Add notification styles
-    const style = document.createElement('style');
-    style.textContent = `
-        .notification {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            background: white;
-            padding: 16px 20px;
-            border-radius: 8px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            z-index: 10000;
-            transform: translateX(400px);
-            opacity: 0;
-            transition: all 0.3s ease;
-        }
-
-        .notification.show {
-            transform: translateX(0);
-            opacity: 1;
-        }
-
-        .notification-success {
-            border-left: 4px solid #4caf50;
-        }
-
-        .notification-success i {
-            color: #4caf50;
-        }
-
-        .notification-error {
-            border-left: 4px solid #f44336;
-        }
-
-        .notification-error i {
-            color: #f44336;
-        }
-
-        .notification span {
-            color: #333;
-            font-size: 14px;
-        }
-    `;
+    
     document.head.appendChild(style);
 })();

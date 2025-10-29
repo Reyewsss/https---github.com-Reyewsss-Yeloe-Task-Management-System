@@ -68,7 +68,7 @@ namespace task_management_system.Controllers
                 }
 
                 var userId = _userSessionService.GetCurrentUserId()!;
-                var result = await _authService.UpdateProfileAsync(userId, request.FirstName, request.LastName, request.Email);
+                var result = await _authService.UpdateProfileAsync(userId, request.FirstName, request.LastName, request.Email, request.Age, request.Address);
 
                 if (result.success)
                 {
@@ -183,6 +183,10 @@ namespace task_management_system.Controllers
         [Required]
         [EmailAddress]
         public string Email { get; set; } = string.Empty;
+        
+        public int Age { get; set; }
+        
+        public string Address { get; set; } = string.Empty;
     }
 
     public class ChangePasswordRequest

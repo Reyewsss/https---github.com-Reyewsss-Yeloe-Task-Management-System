@@ -146,6 +146,8 @@ function updateProfile() {
     const firstName = document.getElementById('editFirstName').value.trim();
     const lastName = document.getElementById('editLastName').value.trim();
     const email = document.getElementById('editEmail').value.trim();
+    const age = document.getElementById('editAge').value;
+    const address = document.getElementById('editAddress').value.trim();
 
     if (!firstName || !lastName || !email) {
         showNotification('error', 'Please fill in all required fields.');
@@ -173,7 +175,9 @@ function updateProfile() {
         body: JSON.stringify({
             firstName: firstName,
             lastName: lastName,
-            email: email
+            email: email,
+            age: parseInt(age) || 0,
+            address: address
         })
     })
     .then(response => response.json())
@@ -758,7 +762,7 @@ function showNotification(type, message) {
 function showMessage(message, type) {
     // Create toast notification
     const toastHTML = `
-        <div class="toast-container position-fixed top-0 end-0 p-3">
+        <div class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index: 9999;">
             <div class="toast ${type === 'success' ? 'bg-success' : 'bg-danger'} text-white" role="alert">
                 <div class="toast-header ${type === 'success' ? 'bg-success' : 'bg-danger'} text-white">
                     <i class="fas ${type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle'} me-2"></i>

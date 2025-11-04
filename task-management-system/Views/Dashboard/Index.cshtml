@@ -187,10 +187,10 @@
                     {
                         @foreach (var task in (List<task_management_system.Models.AddTask>)ViewBag.UpcomingDeadlines)
                         {
-                            <a href="@Url.Action("Dashboard", "Task", new { id = task.Id })" class="deadline-item-link">
+                            <a href="@Url.Action("Dashboard", "Task", new { id = task.TaskId })" class="deadline-item-link">
                                 <div class="deadline-item">
                                     <div class="deadline-info">
-                                        <h4>@task.Title</h4>
+                                        <h4>@task.TaskTitle</h4>
                                         <p>@task.Description</p>
                                         <span class="priority-badge-small @task.Priority.ToString().ToLower()">@task.Priority Priority</span>
                                     </div>
@@ -226,19 +226,19 @@
                 {
                     @foreach (var task in (List<task_management_system.Models.AddTask>)ViewBag.TodaysAgenda)
                     {
-                        <a href="@Url.Action("Dashboard", "Task", new { id = task.Id })" class="agenda-item-link">
+                        <a href="@Url.Action("Dashboard", "Task", new { id = task.TaskId })" class="agenda-item-link">
                             <div class="agenda-item">
                                 <div class="agenda-time">
                                     <span class="time-slot">@(task.DueDate.HasValue ? task.DueDate.Value.ToLocalTime().ToString("hh:mm tt") : "All day")</span>
                                 </div>
                                 <div class="agenda-content">
-                                    <h4>@task.Title</h4>
+                                    <h4>@task.TaskTitle</h4>
                                     <p>@task.Description</p>
-                                    @if (!string.IsNullOrEmpty(task.Project))
+                                    @if (!string.IsNullOrEmpty(task.ProjectId))
                                     {
                                         <span class="agenda-location">
                                             <i class="fas fa-folder"></i>
-                                            @task.Project
+                                            @task.ProjectId
                                         </span>
                                     }
                                     <span class="priority-badge-small @task.Priority.ToString().ToLower()">@task.Priority Priority</span>

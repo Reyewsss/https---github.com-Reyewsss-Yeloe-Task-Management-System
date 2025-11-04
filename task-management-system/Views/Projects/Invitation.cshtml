@@ -9,7 +9,7 @@
 <link rel="stylesheet" href="~/css/webpages-css/invitation-page.css" asp-append-version="true" />
 
 <div class="invitation-container">
-    @if (Model != null && Model.Status == task_management_system.Models.InvitationStatus.Pending && Model.ExpiresAt > DateTime.UtcNow)
+    @if (Model != null && Model.InvitationStatus == task_management_system.Models.InvitationStatus.Pending && Model.ExpiresAt > DateTime.UtcNow)
     {
         <!-- Pending Invitation -->
         <div class="invitation-card">
@@ -42,7 +42,7 @@
                             </div>
                             <div class="meta-item">
                                 <i class="fas fa-info-circle"></i>
-                                <span class="status-badge @project.Status.ToString().ToLower()">@project.Status</span>
+                                <span class="status-badge @project.ProjectStatus.ToString().ToLower()">@project.ProjectStatus</span>
                             </div>
                             @if (project.DueDate.HasValue)
                             {
@@ -93,7 +93,7 @@
             <div class="invitation-footer">
                 <form id="invitationResponseForm" method="post">
                     @Html.AntiForgeryToken()
-                    <input type="hidden" name="invitationId" value="@Model.Id" />
+                    <input type="hidden" name="invitationId" value="@Model.InvitationId" />
                     <button type="button" class="btn btn-secondary btn-lg" id="declineBtn">
                         <i class="fas fa-times-circle"></i> Decline
                     </button>
@@ -104,7 +104,7 @@
             </div>
         </div>
     }
-    else if (Model != null && Model.Status == task_management_system.Models.InvitationStatus.Accepted)
+    else if (Model != null && Model.InvitationStatus == task_management_system.Models.InvitationStatus.Accepted)
     {
         <!-- Already Accepted -->
         <div class="invitation-card status-card success">
@@ -123,7 +123,7 @@
             </div>
         </div>
     }
-    else if (Model != null && Model.Status == task_management_system.Models.InvitationStatus.Declined)
+    else if (Model != null && Model.InvitationStatus == task_management_system.Models.InvitationStatus.Declined)
     {
         <!-- Already Declined -->
         <div class="invitation-card status-card declined">
@@ -139,7 +139,7 @@
             </div>
         </div>
     }
-    else if (Model != null && (Model.Status == task_management_system.Models.InvitationStatus.Expired || Model.ExpiresAt <= DateTime.UtcNow))
+    else if (Model != null && (Model.InvitationStatus == task_management_system.Models.InvitationStatus.Expired || Model.ExpiresAt <= DateTime.UtcNow))
     {
         <!-- Expired -->
         <div class="invitation-card status-card expired">

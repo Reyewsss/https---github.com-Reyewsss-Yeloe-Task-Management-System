@@ -3,40 +3,42 @@ using MongoDB.Bson.Serialization.Attributes;
 
 namespace task_management_system.Models
 {
+    [BsonCollection("tbl_projects")]
     public class Project
     {
         [BsonId]
         [BsonRepresentation(BsonType.ObjectId)]
-        public string? Id { get; set; }
+        [BsonElement("project_id")]
+        public string? ProjectId { get; set; }
 
-        [BsonElement("userId")]
+        [BsonElement("user_id")]
         public string UserId { get; set; } = string.Empty;
 
-        [BsonElement("name")]
-        public string Name { get; set; } = string.Empty;
+        [BsonElement("project_name")]
+        public string ProjectName { get; set; } = string.Empty;
 
         [BsonElement("description")]
         public string? Description { get; set; }
 
-        [BsonElement("status")]
-        public ProjectStatus Status { get; set; } = ProjectStatus.Active;
+        [BsonElement("project_status")]
+        public ProjectStatus ProjectStatus { get; set; } = ProjectStatus.Active;
 
         [BsonElement("priority")]
         public ProjectPriority Priority { get; set; } = ProjectPriority.Medium;
 
-        [BsonElement("startDate")]
+        [BsonElement("start_date")]
         public DateTime? StartDate { get; set; }
 
-        [BsonElement("dueDate")]
+        [BsonElement("due_date")]
         public DateTime? DueDate { get; set; }
 
-        [BsonElement("progress")]
-        public int Progress { get; set; } = 0;
+        [BsonElement("progress_percentage")]
+        public int ProgressPercentage { get; set; } = 0;
 
-        [BsonElement("createdAt")]
+        [BsonElement("created_at")]
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
-        [BsonElement("updatedAt")]
+        [BsonElement("updated_at")]
         public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
     }
 

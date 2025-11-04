@@ -25,7 +25,7 @@
                         <p>Receive updates about your tasks and projects</p>
                     </div>
                     <div class="toggle-switch">
-                        <input type="checkbox" id="emailNotifications" checked>
+                        <input type="checkbox" id="emailNotifications" @(ViewBag.Preferences?.EmailNotifications == true ? "checked" : "")>
                         <label for="emailNotifications"></label>
                     </div>
                 </div>
@@ -35,7 +35,7 @@
                         <p>Get reminded about upcoming deadlines</p>
                     </div>
                     <div class="toggle-switch">
-                        <input type="checkbox" id="taskReminders" checked>
+                        <input type="checkbox" id="taskReminders" @(ViewBag.Preferences?.TaskReminders == true ? "checked" : "")>
                         <label for="taskReminders"></label>
                     </div>
                 </div>
@@ -45,7 +45,7 @@
                         <p>Receive a weekly summary of your productivity</p>
                     </div>
                     <div class="toggle-switch">
-                        <input type="checkbox" id="weeklySummary">
+                        <input type="checkbox" id="weeklySummary" @(ViewBag.Preferences?.WeeklySummary == true ? "checked" : "")>
                         <label for="weeklySummary"></label>
                     </div>
                 </div>
@@ -55,7 +55,7 @@
                         <p>Enable dark mode for a better viewing experience</p>
                     </div>
                     <div class="toggle-switch">
-                        <input type="checkbox" id="darkMode">
+                        <input type="checkbox" id="darkMode" @(ViewBag.Preferences?.DarkMode == true ? "checked" : "")>
                         <label for="darkMode"></label>
                     </div>
                 </div>

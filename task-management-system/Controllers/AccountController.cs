@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using task_management_system.Services;
+using task_management_system.Models;
 using System.ComponentModel.DataAnnotations;
 
 namespace task_management_system.Controllers
@@ -9,26 +10,35 @@ namespace task_management_system.Controllers
         private readonly IUserSessionService _userSessionService;
         private readonly IAuthService _authService;
         private readonly IWebHostEnvironment _environment;
+        private readonly IActivityService _activityService;
+        private readonly IPreferencesService _preferencesService;
 
-        public AccountController(IUserSessionService userSessionService, IAuthService authService, IWebHostEnvironment environment)
+        public AccountController(IUserSessionService userSessionService, IAuthService authService, IWebHostEnvironment environment, IActivityService activityService, IPreferencesService preferencesService)
         {
             _userSessionService = userSessionService;
             _authService = authService;
             _environment = environment;
+            _activityService = activityService;
+            _preferencesService = preferencesService;
         }
 
-        public IActionResult Settings()
+        public async Task<IActionResult> Settings()
         {
             if (!_userSessionService.IsUserLoggedIn())
             {
                 return RedirectToAction("Login", "Auth");
             }
 
+            var userId = _userSessionService.GetCurrentUserId()!;
             var userEmail = _userSessionService.GetCurrentUserEmail()!;
             ViewBag.UserName = _userSessionService.GetCurrentUserName();
             ViewBag.UserEmail = userEmail;
             ViewBag.UserProfilePicture = _userSessionService.GetCurrentUserProfilePicture();
             ViewData["Title"] = "Settings";
+
+            // Get user preferences
+            var preferences = await _preferencesService.GetUserPreferencesAsync(userId);
+            ViewBag.Preferences = preferences;
 
             return View();
         }
@@ -74,6 +84,11 @@ namespace task_management_system.Controllers
                 {
                     // Update session with new email if changed
                     _userSessionService.UpdateUserSession(request.Email, request.FirstName, request.LastName);
+                    
+                    // Log profile update activity
+                    var ipAddress = HttpContext.Connection.RemoteIpAddress?.ToString();
+                    var userAgent = HttpContext.Request.Headers["User-Agent"].ToString();
+                    await _activityService.LogActivityAsync(userId, ActivityTypes.ProfileUpdate, "Updated profile information", ipAddress, userAgent);
                 }
 
                 return Json(new { success = result.success, message = result.message });
@@ -106,6 +121,14 @@ namespace task_management_system.Controllers
 
                 var userId = _userSessionService.GetCurrentUserId()!;
                 var result = await _authService.ChangePasswordAsync(userId, request.CurrentPassword, request.NewPassword);
+
+                if (result.success)
+                {
+                    // Log password change activity
+                    var ipAddress = HttpContext.Connection.RemoteIpAddress?.ToString();
+                    var userAgent = HttpContext.Request.Headers["User-Agent"].ToString();
+                    await _activityService.LogActivityAsync(userId, ActivityTypes.PasswordChange, "Changed account password", ipAddress, userAgent);
+                }
 
                 return Json(new { success = result.success, message = result.message });
             }
@@ -160,6 +183,11 @@ namespace task_management_system.Controllers
                     // Update session with new profile picture
                     _userSessionService.UpdateProfilePicture(dataUrl);
                     
+                    // Log profile picture update activity
+                    var ipAddress = HttpContext.Connection.RemoteIpAddress?.ToString();
+                    var userAgent = HttpContext.Request.Headers["User-Agent"].ToString();
+                    await _activityService.LogActivityAsync(userId, ActivityTypes.ProfilePictureUpdate, "Updated profile picture", ipAddress, userAgent);
+                    
                     return Json(new { success = true, message = result.message, profilePictureUrl = dataUrl });
                 }
 
@@ -170,6 +198,170 @@ namespace task_management_system.Controllers
                 return Json(new { success = false, message = $"Error: {ex.Message}" });
             }
         }
+
+        [HttpGet]
+        public async Task<IActionResult> GetUserActivities()
+        {
+            try
+            {
+                if (!_userSessionService.IsUserLoggedIn())
+                {
+                    return Json(new { success = false, message = "User not authenticated" });
+                }
+
+                var userId = _userSessionService.GetCurrentUserId()!;
+                var activities = await _activityService.GetUserActivitiesAsync(userId, 50);
+
+                var activitiesData = activities.Select(a => new
+                {
+                    id = a.Id,
+                    activityType = a.ActivityType,
+                    description = a.Description,
+                    ipAddress = a.IpAddress,
+                    userAgent = a.UserAgent,
+                    metadata = a.Metadata,
+                    createdAt = a.CreatedAt
+                }).ToList();
+
+                return Json(new { success = true, activities = activitiesData });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = $"Error: {ex.Message}" });
+            }
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> DeleteAccount([FromBody] DeleteAccountRequest request)
+        {
+            try
+            {
+                if (!_userSessionService.IsUserLoggedIn())
+                {
+                    return Json(new { success = false, message = "User not authenticated" });
+                }
+
+                if (string.IsNullOrEmpty(request.Password))
+                {
+                    return Json(new { success = false, message = "Password is required" });
+                }
+
+                var userId = _userSessionService.GetCurrentUserId()!;
+                var userEmail = _userSessionService.GetCurrentUserEmail()!;
+
+                // Verify password before deletion
+                var user = await _authService.LoginAsync(userEmail, request.Password);
+                if (user == null)
+                {
+                    return Json(new { success = false, message = "Incorrect password" });
+                }
+
+                // Log account deletion activity before deleting
+                var ipAddress = HttpContext.Connection.RemoteIpAddress?.ToString();
+                var userAgent = HttpContext.Request.Headers["User-Agent"].ToString();
+                await _activityService.LogActivityAsync(userId, "AccountDeleted", "Account permanently deleted", ipAddress, userAgent);
+
+                // Delete account and all associated data
+                var result = await _authService.DeleteAccountAsync(userId);
+
+                if (result.success)
+                {
+                    // Clear session
+                    HttpContext.Session.Clear();
+                    
+                    return Json(new { success = true, message = "Account deleted successfully" });
+                }
+
+                return Json(new { success = false, message = result.message });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = $"Error: {ex.Message}" });
+            }
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetPreferences()
+        {
+            try
+            {
+                if (!_userSessionService.IsUserLoggedIn())
+                {
+                    return Json(new { success = false, message = "User not authenticated" });
+                }
+
+                var userId = _userSessionService.GetCurrentUserId()!;
+                var preferences = await _preferencesService.GetUserPreferencesAsync(userId);
+
+                return Json(new
+                {
+                    success = true,
+                    preferences = new
+                    {
+                        emailNotifications = preferences.EmailNotifications,
+                        taskReminders = preferences.TaskReminders,
+                        weeklySummary = preferences.WeeklySummary,
+                        darkMode = preferences.DarkMode
+                    }
+                });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = $"Error: {ex.Message}" });
+            }
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> UpdatePreferences([FromBody] UpdatePreferencesRequest request)
+        {
+            try
+            {
+                if (!_userSessionService.IsUserLoggedIn())
+                {
+                    return Json(new { success = false, message = "User not authenticated" });
+                }
+
+                var userId = _userSessionService.GetCurrentUserId()!;
+                var preferences = new UserPreferences
+                {
+                    UserId = userId,
+                    EmailNotifications = request.EmailNotifications,
+                    TaskReminders = request.TaskReminders,
+                    WeeklySummary = request.WeeklySummary,
+                    DarkMode = request.DarkMode
+                };
+
+                var result = await _preferencesService.UpdateUserPreferencesAsync(userId, preferences);
+
+                if (result.success)
+                {
+                    // Log preferences update activity
+                    var ipAddress = HttpContext.Connection.RemoteIpAddress?.ToString();
+                    var userAgent = HttpContext.Request.Headers["User-Agent"].ToString();
+                    await _activityService.LogActivityAsync(userId, "PreferencesUpdated", "Updated account preferences", ipAddress, userAgent);
+                }
+
+                return Json(new { success = result.success, message = result.message });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = $"Error: {ex.Message}" });
+            }
+        }
+    }
+
+    public class UpdatePreferencesRequest
+    {
+        public bool EmailNotifications { get; set; }
+        public bool TaskReminders { get; set; }
+        public bool WeeklySummary { get; set; }
+        public bool DarkMode { get; set; }
+    }
+
+    public class DeleteAccountRequest
+    {
+        [Required]
+        public string Password { get; set; } = string.Empty;
     }
 
     public class UpdateProfileRequest

@@ -11,9 +11,9 @@
         <div class="card-content">
             <div class="profile-avatar">
                 <div class="avatar-circle" id="avatarDisplay">
-                    @if (!string.IsNullOrEmpty(Model?.ProfilePicture) && !string.IsNullOrEmpty(Model?.ProfilePictureContentType))
+                    @if (!string.IsNullOrEmpty(Model?.ProfilePictureUrl) && !string.IsNullOrEmpty(Model?.ProfilePictureContentType))
                     {
-                        <img src="data:@Model.ProfilePictureContentType;base64,@Model.ProfilePicture" alt="Profile Picture" class="profile-picture-img" id="profilePictureImg" />
+                        <img src="data:@Model.ProfilePictureContentType;base64,@Model.ProfilePictureUrl" alt="Profile Picture" class="profile-picture-img" id="profilePictureImg" />
                     }
                     else
                     {
@@ -254,6 +254,94 @@
                         Delete Account
                     </button>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Activity Modal -->
+    <div class="modal-overlay" id="activityModalOverlay">
+        <div class="modal-container activity-modal">
+            <div class="modal-header">
+                <h3><i class="fas fa-history"></i> Account Activity</h3>
+                <button class="modal-close" onclick="closeActivityModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="activity-list" id="activityList">
+                    <div class="loading-state">
+                        <i class="fas fa-spinner fa-spin"></i>
+                        <p>Loading activities...</p>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline" onclick="closeActivityModal()">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Account Modal -->
+    <div class="modal-overlay" id="deleteAccountModalOverlay">
+        <div class="modal-container delete-modal">
+            <div class="modal-header danger-header">
+                <h3><i class="fas fa-exclamation-triangle"></i> Delete Account</h3>
+                <button class="modal-close" onclick="closeDeleteAccountModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="warning-box">
+                    <div class="warning-icon">
+                        <i class="fas fa-exclamation-circle"></i>
+                    </div>
+                    <div class="warning-content">
+                        <h4>⚠️ This action cannot be undone!</h4>
+                        <p>Deleting your account will permanently remove:</p>
+                        <div class="warning-grid">
+                            <ul>
+                                <li><strong>Your profile</strong> and personal information</li>
+                                <li><strong>All your projects</strong> and tasks</li>
+                                <li><strong>All comments</strong> and work submissions</li>
+                            </ul>
+                            <ul>
+                                <li><strong>All invitations</strong> and memberships</li>
+                                <li><strong>All activity history</strong></li>
+                                <li><strong>All notifications</strong> and data</li>
+                            </ul>
+                        </div>
+                        <p class="mt-3"><strong>This action is immediate and irreversible.</strong></p>
+                    </div>
+                </div>
+
+                <div class="confirmation-section">
+                    <div class="form-group">
+                        <label for="deletePasswordConfirm">Enter your password to confirm:</label>
+                        <div class="password-input">
+                            <input type="password" id="deletePasswordConfirm" class="form-control" placeholder="Your password" required>
+                            <button type="button" class="password-toggle" onclick="togglePasswordVisibility('deletePasswordConfirm')">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="deleteTypeConfirm">Type <strong>DELETE MY ACCOUNT</strong> to confirm:</label>
+                        <input type="text" id="deleteTypeConfirm" class="form-control" placeholder="DELETE MY ACCOUNT" required>
+                    </div>
+                    <div class="form-check">
+                        <input type="checkbox" id="deleteUnderstandCheck" class="form-check-input" required>
+                        <label for="deleteUnderstandCheck" class="form-check-label">
+                            I understand that this action is permanent and cannot be reversed
+                        </label>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline" onclick="closeDeleteAccountModal()">Cancel</button>
+                <button type="button" class="btn btn-danger" id="confirmDeleteButton" onclick="confirmDeleteAccount()" disabled>
+                    <i class="fas fa-trash"></i>
+                    Permanently Delete Account
+                </button>
             </div>
         </div>
     </div>

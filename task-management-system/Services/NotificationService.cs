@@ -34,7 +34,7 @@ namespace task_management_system.Services
                     UserId = userId,
                     Title = title,
                     Message = message,
-                    Type = type,
+                    NotificationType = type,
                     Link = link,
                     CreatedAt = DateTime.UtcNow
                 };
@@ -84,7 +84,7 @@ namespace task_management_system.Services
             try
             {
                 var filter = Builders<Notification>.Filter.And(
-                    Builders<Notification>.Filter.Eq(n => n.Id, notificationId),
+                    Builders<Notification>.Filter.Eq(n => n.NotificationId, notificationId),
                     Builders<Notification>.Filter.Eq(n => n.UserId, userId)
                 );
 
@@ -145,11 +145,11 @@ namespace task_management_system.Services
                         await CreateNotificationAsync(
                             task.UserId,
                             "⏰ Task Deadline Reminder",
-                            $"'{task.Title}' is due in 12 hours - {dueDate:MMM dd, yyyy 'at' hh:mm tt}",
+                            $"'{task.TaskTitle}' is due in 12 hours - {dueDate:MMM dd, yyyy 'at' hh:mm tt}",
                             NotificationType.Reminder,
-                            $"/Task/Dashboard/{task.Id}"
+                            $"/Task/Dashboard/{task.TaskId}"
                         );
-                        _logger.LogInformation("Sent 12-hour deadline notification for task {TaskId}", task.Id);
+                        _logger.LogInformation("Sent 12-hour deadline notification for task {TaskId}", task.TaskId);
                     }
                     // Check if we need to send 1-hour notification
                     else if (timeDifference.TotalHours <= 1 && timeDifference.TotalMinutes > 55)
@@ -157,11 +157,11 @@ namespace task_management_system.Services
                         await CreateNotificationAsync(
                             task.UserId,
                             "🚨 Urgent: Task Due Soon",
-                            $"'{task.Title}' is due in 1 hour - {dueDate:MMM dd, yyyy 'at' hh:mm tt}",
+                            $"'{task.TaskTitle}' is due in 1 hour - {dueDate:MMM dd, yyyy 'at' hh:mm tt}",
                             NotificationType.Warning,
-                            $"/Task/Dashboard/{task.Id}"
+                            $"/Task/Dashboard/{task.TaskId}"
                         );
-                        _logger.LogInformation("Sent 1-hour deadline notification for task {TaskId}", task.Id);
+                        _logger.LogInformation("Sent 1-hour deadline notification for task {TaskId}", task.TaskId);
                     }
                     // Check if task is overdue
                     else if (timeDifference.TotalHours < 0 && timeDifference.TotalHours > -1)
@@ -169,11 +169,11 @@ namespace task_management_system.Services
                         await CreateNotificationAsync(
                             task.UserId,
                             "❌ Task Overdue",
-                            $"'{task.Title}' was due at {dueDate:MMM dd, yyyy 'at' hh:mm tt}",
+                            $"'{task.TaskTitle}' was due at {dueDate:MMM dd, yyyy 'at' hh:mm tt}",
                             NotificationType.Alert,
-                            $"/Task/Dashboard/{task.Id}"
+                            $"/Task/Dashboard/{task.TaskId}"
                         );
-                        _logger.LogInformation("Sent overdue notification for task {TaskId}", task.Id);
+                        _logger.LogInformation("Sent overdue notification for task {TaskId}", task.TaskId);
                     }
                 }
             }

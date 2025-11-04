@@ -35,7 +35,7 @@ namespace task_management_system.Services
 
             // Check if invitation already exists
             var existingInvitation = await _context.ProjectInvitations
-                .Find(i => i.ProjectId == projectId && i.InvitedUserEmail == invitedUserEmail && i.Status == InvitationStatus.Pending)
+                .Find(i => i.ProjectId == projectId && i.InvitedUserEmail == invitedUserEmail && i.InvitationStatus == InvitationStatus.Pending)
                 .FirstOrDefaultAsync();
 
             if (existingInvitation != null)
@@ -45,7 +45,7 @@ namespace task_management_system.Services
 
             // Check if user is already a member
             var existingMember = await _context.ProjectMembers
-                .Find(m => m.ProjectId == projectId && m.UserId == invitedUser.Id)
+                .Find(m => m.ProjectId == projectId && m.UserId == invitedUser.UserId)
                 .FirstOrDefaultAsync();
 
             if (existingMember != null)
@@ -61,8 +61,8 @@ namespace task_management_system.Services
                 InvitedByUserId = invitedByUserId,
                 InvitedByUserName = invitedByUserName,
                 InvitedUserEmail = invitedUserEmail,
-                InvitedUserId = invitedUser.Id,
-                Status = InvitationStatus.Pending,
+                InvitedUserId = invitedUser.UserId,
+                InvitationStatus = InvitationStatus.Pending,
                 Role = ProjectRole.Viewer,
                 InvitedAt = DateTime.UtcNow,
                 ExpiresAt = DateTime.UtcNow.AddDays(7)
@@ -72,11 +72,11 @@ namespace task_management_system.Services
 
             // Send notification with link to invitation page
             await _notificationService.CreateNotificationAsync(
-                invitedUser.Id,
+                invitedUser.UserId,
                 "Project Invitation",
                 $"{invitedByUserName} has invited you to join the project '{projectName}'",
                 NotificationType.TeamMemberJoined,
-                $"/Projects/Invitation/{invitation.Id}"
+                $"/Projects/Invitation/{invitation.InvitationId}"
             );
 
             // Send email invitation
@@ -95,7 +95,7 @@ namespace task_management_system.Services
             var subject = $"You're invited to join '{invitation.ProjectName}'";
             // Get base URL from configuration
             var baseUrl = _configuration["AppSettings:BaseUrl"] ?? "https://localhost:7279";
-            var acceptUrl = $"{baseUrl}/Projects/Invitation/{invitation.Id}";
+            var acceptUrl = $"{baseUrl}/Projects/Invitation/{invitation.InvitationId}";
 
             var body = $@"
                 <div style='font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;'>
@@ -136,7 +136,7 @@ namespace task_management_system.Services
         public async Task<ProjectInvitation?> GetInvitationByIdAsync(string invitationId)
         {
             var invitation = await _context.ProjectInvitations
-                .Find(i => i.Id == invitationId)
+                .Find(i => i.InvitationId == invitationId)
                 .FirstOrDefaultAsync();
 
             return invitation;
@@ -145,7 +145,7 @@ namespace task_management_system.Services
         public async Task<List<ProjectInvitation>> GetUserInvitationsAsync(string userEmail)
         {
             var invitations = await _context.ProjectInvitations
-                .Find(i => i.InvitedUserEmail == userEmail && i.Status == InvitationStatus.Pending && i.ExpiresAt > DateTime.UtcNow)
+                .Find(i => i.InvitedUserEmail == userEmail && i.InvitationStatus == InvitationStatus.Pending && i.ExpiresAt > DateTime.UtcNow)
                 .SortByDescending(i => i.InvitedAt)
                 .ToListAsync();
 
@@ -154,22 +154,22 @@ namespace task_management_system.Services
 
         public async Task<bool> AcceptInvitationAsync(string invitationId, string userId)
         {
-            var invitation = await _context.ProjectInvitations.Find(i => i.Id == invitationId).FirstOrDefaultAsync();
+            var invitation = await _context.ProjectInvitations.Find(i => i.InvitationId == invitationId).FirstOrDefaultAsync();
 
-            if (invitation == null || invitation.Status != InvitationStatus.Pending || invitation.ExpiresAt < DateTime.UtcNow)
+            if (invitation == null || invitation.InvitationStatus != InvitationStatus.Pending || invitation.ExpiresAt < DateTime.UtcNow)
             {
                 return false;
             }
 
             // Update invitation status
             var update = Builders<ProjectInvitation>.Update
-                .Set(i => i.Status, InvitationStatus.Accepted)
+                .Set(i => i.InvitationStatus, InvitationStatus.Accepted)
                 .Set(i => i.RespondedAt, DateTime.UtcNow);
 
-            await _context.ProjectInvitations.UpdateOneAsync(i => i.Id == invitationId, update);
+            await _context.ProjectInvitations.UpdateOneAsync(i => i.InvitationId == invitationId, update);
 
             // Get user info
-            var user = await _context.Users.Find(u => u.Id == userId).FirstOrDefaultAsync();
+            var user = await _context.Users.Find(u => u.UserId == userId).FirstOrDefaultAsync();
             
             var userName = user != null ? $"{user.FirstName} {user.LastName}".Trim() : "Unknown";
             if (string.IsNullOrEmpty(userName) && user != null)
@@ -179,16 +179,16 @@ namespace task_management_system.Services
 
             // Format profile picture as data URL if exists
             string? profilePicture = null;
-            if (user != null && !string.IsNullOrEmpty(user.ProfilePicture))
+            if (user != null && !string.IsNullOrEmpty(user.ProfilePictureUrl))
             {
-                if (!user.ProfilePicture.StartsWith("data:"))
+                if (!user.ProfilePictureUrl.StartsWith("data:"))
                 {
                     var contentType = user.ProfilePictureContentType ?? "image/jpeg";
-                    profilePicture = $"data:{contentType};base64,{user.ProfilePicture}";
+                    profilePicture = $"data:{contentType};base64,{user.ProfilePictureUrl}";
                 }
                 else
                 {
-                    profilePicture = user.ProfilePicture;
+                    profilePicture = user.ProfilePictureUrl;
                 }
             }
 
@@ -199,7 +199,6 @@ namespace task_management_system.Services
                 UserId = userId,
                 UserEmail = invitation.InvitedUserEmail,
                 UserName = userName,
-                ProfilePicture = profilePicture,
                 Role = invitation.Role,
                 JoinedAt = DateTime.UtcNow,
                 AddedByUserId = invitation.InvitedByUserId
@@ -221,18 +220,18 @@ namespace task_management_system.Services
 
         public async Task<bool> DeclineInvitationAsync(string invitationId)
         {
-            var invitation = await _context.ProjectInvitations.Find(i => i.Id == invitationId).FirstOrDefaultAsync();
+            var invitation = await _context.ProjectInvitations.Find(i => i.InvitationId == invitationId).FirstOrDefaultAsync();
 
-            if (invitation == null || invitation.Status != InvitationStatus.Pending)
+            if (invitation == null || invitation.InvitationStatus != InvitationStatus.Pending)
             {
                 return false;
             }
 
             var update = Builders<ProjectInvitation>.Update
-                .Set(i => i.Status, InvitationStatus.Declined)
+                .Set(i => i.InvitationStatus, InvitationStatus.Declined)
                 .Set(i => i.RespondedAt, DateTime.UtcNow);
 
-            await _context.ProjectInvitations.UpdateOneAsync(i => i.Id == invitationId, update);
+            await _context.ProjectInvitations.UpdateOneAsync(i => i.InvitationId == invitationId, update);
 
             return true;
         }
@@ -243,28 +242,6 @@ namespace task_management_system.Services
                 .Find(m => m.ProjectId == projectId)
                 .SortBy(m => m.JoinedAt)
                 .ToListAsync();
-
-            // Fetch profile pictures for each member
-            foreach (var member in members)
-            {
-                var user = await _context.Users
-                    .Find(u => u.Id == member.UserId)
-                    .FirstOrDefaultAsync();
-                
-                if (user != null && !string.IsNullOrEmpty(user.ProfilePicture))
-                {
-                    // Format as data URL if not already formatted
-                    if (!user.ProfilePicture.StartsWith("data:"))
-                    {
-                        var contentType = user.ProfilePictureContentType ?? "image/jpeg";
-                        member.ProfilePicture = $"data:{contentType};base64,{user.ProfilePicture}";
-                    }
-                    else
-                    {
-                        member.ProfilePicture = user.ProfilePicture;
-                    }
-                }
-            }
 
             return members;
         }
@@ -298,16 +275,16 @@ namespace task_management_system.Services
                 if (result.DeletedCount > 0)
                 {
                     // Optionally: Send notification to the removed user
-                    var user = await _context.Users.Find(u => u.Id == userId).FirstOrDefaultAsync();
+                    var user = await _context.Users.Find(u => u.UserId == userId).FirstOrDefaultAsync();
                     if (user != null)
                     {
-                        var project = await _context.Projects.Find(p => p.Id == projectId).FirstOrDefaultAsync();
+                        var project = await _context.Projects.Find(p => p.ProjectId == projectId).FirstOrDefaultAsync();
                         if (project != null)
                         {
                             await _notificationService.CreateNotificationAsync(
                                 userId,
                                 "Removed from Project",
-                                $"You have been removed from the project '{project.Name}'.",
+                                $"You have been removed from the project '{project.ProjectName}'.",
                                 NotificationType.SystemUpdate,
                                 $"/Projects/Index"
                             );

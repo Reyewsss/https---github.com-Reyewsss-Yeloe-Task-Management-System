@@ -1,7 +1,7 @@
 @model task_management_system.Models.AddTask
 
 @{
-    ViewData["Title"] = $"{Model.Title} - Task Details";
+    ViewData["Title"] = $"{Model.TaskTitle} - Task Details";
     Layout = "_DashboardLayout";
 }
 
@@ -10,8 +10,8 @@
 <!-- Task Dashboard Header -->
 <div class="dashboard-header">
     <div class="header-left">
-        <h1><i class="fas fa-tasks"></i> @Model.Title</h1>
-        <span class="task-status-badge @Model.Status.ToString().ToLower()">@Model.Status</span>
+        <h1><i class="fas fa-tasks"></i> @Model.TaskTitle</h1>
+        <span class="task-status-badge @Model.TaskStatus.ToString().ToLower()">@Model.TaskStatus</span>
     </div>
     <div class="header-right">
         <span class="task-priority-badge @Model.Priority.ToString().ToLower()">@Model.Priority Priority</span>
@@ -37,7 +37,7 @@
             <div class="card-content">
                 <div class="info-row">
                     <label>Name:</label>
-                    <div class="info-value">@Model.Title</div>
+                    <div class="info-value">@Model.TaskTitle</div>
                 </div>
                 <div class="info-row">
                     <label>Description:</label>
@@ -45,7 +45,7 @@
                 </div>
                 <div class="info-row">
                     <label>Project:</label>
-                    <div class="info-value">@(Model.Project ?? "No project assigned")</div>
+                    <div class="info-value">@(Model.ProjectId ?? "No project assigned")</div>
                 </div>
                 <div class="info-row">
                     <label>Priority:</label>
@@ -56,7 +56,7 @@
                 <div class="info-row">
                     <label>Status:</label>
                     <div class="info-value">
-                        <span class="status-badge @Model.Status.ToString().ToLower()">@Model.Status</span>
+                        <span class="status-badge @Model.TaskStatus.ToString().ToLower()">@Model.TaskStatus</span>
                     </div>
                 </div>
             </div>
@@ -85,10 +85,23 @@
                                   placeholder="Write a comment..."></textarea>
                     </div>
                     <div class="form-actions">
+                        <input type="file" id="commentFileInput" style="display: none;" onchange="handleCommentFileSelect(event)">
+                        <button type="button" class="btn btn-outline btn-icon" onclick="document.getElementById('commentFileInput').click()" title="Attach file">
+                            <i class="fas fa-paperclip"></i>
+                        </button>
                         <button type="button" class="btn btn-primary" onclick="addComment()">
                             <i class="fas fa-paper-plane"></i>
                             Post Comment
                         </button>
+                    </div>
+                    <div id="commentFilePreview" class="comment-file-preview" style="display: none;">
+                        <div class="file-info">
+                            <i class="fas fa-file" id="commentFileIcon"></i>
+                            <span class="file-name" id="commentFileName"></span>
+                            <button type="button" class="remove-file" onclick="removeCommentFile()">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -106,7 +119,7 @@
                 </div>
                 <div class="card-content">
                     <form id="addWorkForm">
-                        @if (Model.Status == task_management_system.Models.TaskStatus.Pending)
+                        @if (Model.TaskStatus == task_management_system.Models.TaskStatus.Pending)
                         {
                             <div class="alert alert-info mb-3" style="background: #FFF3E0; color: #E65100; border: 1px solid #FFB74D;">
                                 <i class="fas fa-info-circle"></i>
@@ -204,7 +217,7 @@
 @section Scripts {
     <script>
         window.taskData = {
-            taskId: '@Model.Id',
+            taskId: '@Model.TaskId',
             addCommentUrl: '@Url.Action("AddComment", "Task")',
             getCommentsUrl: '@Url.Action("GetComments", "Task")',
             addWorkUrl: '@Url.Action("AddWork", "Task")',

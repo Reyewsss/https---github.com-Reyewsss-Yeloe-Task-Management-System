@@ -15,16 +15,70 @@
     </div>
     <div class="header-right">
         <button class="btn btn-primary" id="newTaskBtn">
-            <i class="fas fa-plus"></i> New Task
+            <i class="fas fa-plus"></i> Create
         </button>
     </div>
 </div>
 
 <div class="tasks-filters">
     <button class="filter-btn active" data-filter="all">All Tasks</button>
-    <button class="filter-btn" data-filter="pending">Pending</button>
-    <button class="filter-btn" data-filter="in-progress">In Progress</button>
-    <button class="filter-btn" data-filter="completed">Completed</button>
+    <div class="status-filter-container" id="statusFiltersContainer">
+        <!-- Status filters will be dynamically populated -->
+    </div>
+    <div class="status-actions-group" style="margin-left: auto;">
+        <button class="btn" id="quickAddStatusBtn">
+            <i class="fas fa-plus"></i>
+        </button>
+
+        <div class="dropdown" style="position: relative; display: inline-block;">
+            <button class="btn" id="moreActionsBtn">
+                <i class="fas fa-ellipsis-h"></i>
+            </button>
+
+            <div class="dropdown-menu-task" id="statusDropdownMenu" style="display: none;">
+                <a class="dropdown-item" href="#" id="manageStatusLink">
+                    <i class="fas fa-cog"></i> Manage Status Labels
+                </a>
+                <a class="dropdown-item" href="#" id="markCompleteBtn">
+                    <i class="fas fa-check-double"></i> Mark all as Complete
+                </a>
+                <div class="dropdown-divider"></div>
+                <a class="dropdown-item" href="#" id="resetStatusBtn">
+                    <i class="fas fa-redo"></i> Reset to Default
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Status Manager Panel (hidden by default) -->
+<div id="quickAddPanel" class="quick-add-panel" style="display: none;">
+    <div class="quick-add-content">
+        <div class="quick-add-header">
+            <h5 class="mb-0">How do you track work?</h5>
+            <button class="btn-close-panel" id="closeQuickAdd">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="quick-add-body">
+            <p class="status-subtitle">As you complete work, it moves through these statuses.</p>
+            
+            <!-- Status List -->
+            <div class="status-list" id="statusList">
+                <!-- Status items will be populated here -->
+            </div>
+            
+            <!-- Add Status Button -->
+            <button class="btn-add-status" id="addStatusBtn">
+                Add status
+            </button>
+            
+            <!-- Finish Button -->
+            <button class="btn-finish" id="finishStatusBtn">
+                Finish
+            </button>
+        </div>
+    </div>
 </div>
 
 <div class="tasks-container" id="tasksContainer">
@@ -36,27 +90,34 @@
         {
             var isOwner = task.UserId == currentUserId;
             
-            <div class="task-item" data-status="@task.Status.ToString().ToLower()" data-id="@task.Id" onclick="window.location.href='@Url.Action("Dashboard", "Task", new { id = task.Id })'" style="cursor: pointer;">
+            <div class="task-item" data-status="@(task.StatusLabelId ?? task.TaskStatus.ToString().ToLower())" data-id="@task.TaskId" onclick="window.location.href='@Url.Action("Dashboard", "Task", new { id = task.TaskId })'" style="cursor: pointer;">
                 @if (isOwner)
                 {
-                    <div class="task-checkbox" onclick="event.stopPropagation();">
-                        <input type="checkbox" id="task-@task.Id" @(task.IsCompleted ? "checked" : "")
-                               onchange="toggleTaskComplete('@task.Id')">
-                        <label for="task-@task.Id"></label>
+                    <div class="task-status-badge" onclick="event.stopPropagation();" style="background-color: @(task.StatusLabelColor ?? "#6c757d");">
+                        <select class="status-dropdown" data-task-id="@task.TaskId" onchange="updateTaskStatus('@task.TaskId', this.value)" onclick="event.stopPropagation();">
+                            <!-- Options will be populated dynamically -->
+                        </select>
+                        <span class="status-display">@(task.StatusLabelName ?? task.TaskStatus.ToString())</span>
                     </div>
                 }
-                <div class="task-content @(task.IsCompleted ? "completed" : "")">
-                    <h4>@task.Title</h4>
+                else
+                {
+                    <div class="task-status-badge-readonly" style="background-color: @(task.StatusLabelColor ?? "#6c757d");">
+                        @(task.StatusLabelName ?? task.TaskStatus.ToString())
+                    </div>
+                }
+                <div class="task-content">
+                    <h4>@task.TaskTitle</h4>
                     <p class="task-description">@task.Description</p>
                     <div class="task-meta">
-                        @if (!string.IsNullOrEmpty(task.Project))
+                        @if (!string.IsNullOrEmpty(task.ProjectId))
                         {
-                            <span class="task-project">@task.Project</span>
+                            <span class="task-project">@task.ProjectId</span>
                         }
-                        @if (!string.IsNullOrEmpty(task.AssignedToName))
+                        @if (!string.IsNullOrEmpty(task.AssignedUserName))
                         {
                             <span class="task-assigned">
-                                <i class="fas fa-user"></i> @task.AssignedToName
+                                <i class="fas fa-user"></i> @task.AssignedUserName
                             </span>
                         }
                         @if (task.DueDate.HasValue)
@@ -72,10 +133,9 @@
                 <div class="task-actions" onclick="event.stopPropagation();">
                     @if (isOwner)
                     {
-                        <button class="btn-icon assign" onclick="assignTask('@task.Id')" title="Assign to member">
-                        </button>
-                        <button class="btn-icon edit" onclick="editTask('@task.Id')"><i class="fas fa-edit"></i></button>
-                        <button class="btn-icon delete" onclick="deleteTask('@task.Id')"><i class="fas fa-trash"></i></button>
+                        <button class="btn-icon assign" onclick="assignTask('@task.TaskId')" title="Assign to member"></button>
+                        <button class="btn-icon edit" onclick="editTask('@task.TaskId')"><i class="fas fa-edit"></i></button>
+                        <button class="btn-icon delete" onclick="deleteTask('@task.TaskId')"><i class="fas fa-trash"></i></button>
                     }
                     else
                     {
@@ -130,7 +190,7 @@
                             {
                                 @foreach (var project in ViewBag.Projects)
                                 {
-                                    <option value="@project.Name">@project.Name</option>
+                                    <option value="@project.ProjectName">@project.ProjectName</option>
                                 }
                             }
                             <option value="__new__">+ Create New Project...</option>
@@ -159,7 +219,7 @@
                                 </select>
                             </div>
                             <small class="form-text text-muted" style="margin-top: 8px;">
-                                <i class="fas fa-bell"></i> You'll be notified 12 hours and 1 hour before deadline
+                                You'll be notified 12 hours and 1 hour before deadline
                             </small>
                         </div>
                     </div>
@@ -173,7 +233,7 @@
                         <!-- Will be populated dynamically based on selected project -->
                     </select>
                     <small class="form-text text-muted">
-                        <i class="fas fa-info-circle"></i> Select a project first to see available members
+                        Select a project first to see available members
                     </small>
                 </div>
 
@@ -210,9 +270,19 @@
             getTaskUrl: '@Url.Action("GetTask", "Task")',
             completeUrl: '@Url.Action("Complete", "Task")',
             deleteUrl: '@Url.Action("Delete", "Task")',
-            getProjectMembersUrl: '@Url.Action("GetProjectMembers", "Projects")'
+            getProjectMembersUrl: '@Url.Action("GetProjectMembers", "Projects")',
+            updateStatusUrl: '@Url.Action("UpdateStatus", "Task")'
+        };
+
+        window.statusUrls = {
+            getLabelsUrl: '/api/TaskStatus/labels',
+            createLabelUrl: '/api/TaskStatus/labels',
+            updateLabelUrl: '/api/TaskStatus/labels',
+            deleteLabelUrl: '/api/TaskStatus/labels',
+            initializeUrl: '/api/TaskStatus/labels/initialize'
         };
     </script>
     <script src="~/js/webpages-js/task-index.js" asp-append-version="true"></script>
     <script src="~/js/webpages-js/task-page.js" asp-append-version="true"></script>
+    <script src="~/js/webpages-js/task-status-clean.js" asp-append-version="true"></script>
 }

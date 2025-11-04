@@ -29,13 +29,13 @@ namespace task_management_system.Services
             var project = new Project
             {
                 UserId = userId,
-                Name = model.Name,
+                ProjectName = model.Name,
                 Description = model.Description,
-                Status = model.Status,
+                ProjectStatus = model.Status,
                 Priority = model.Priority,
                 StartDate = model.StartDate,
                 DueDate = model.DueDate,
-                Progress = model.Progress,
+                ProgressPercentage = model.Progress,
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow
             };
@@ -62,13 +62,13 @@ namespace task_management_system.Services
             var sharedProjects = new List<Project>();
             if (memberProjectIds.Any())
             {
-                var filter = Builders<Project>.Filter.In(p => p.Id, memberProjectIds);
+                var filter = Builders<Project>.Filter.In(p => p.ProjectId, memberProjectIds);
                 sharedProjects = await _context.Projects.Find(filter).ToListAsync();
             }
 
             // Combine both lists and remove duplicates
             var allProjects = ownedProjects.Concat(sharedProjects)
-                .GroupBy(p => p.Id)
+                .GroupBy(p => p.ProjectId)
                 .Select(g => g.First())
                 .OrderByDescending(p => p.CreatedAt)
                 .ToList();
@@ -80,7 +80,7 @@ namespace task_management_system.Services
         {
             // First check if user owns the project
             var project = await _context.Projects
-                .Find(p => p.Id == projectId && p.UserId == userId)
+                .Find(p => p.ProjectId == projectId && p.UserId == userId)
                 .FirstOrDefaultAsync();
 
             // If not owner, check if user is a member
@@ -94,7 +94,7 @@ namespace task_management_system.Services
                 {
                     // User is a member, get the project
                     project = await _context.Projects
-                        .Find(p => p.Id == projectId)
+                        .Find(p => p.ProjectId == projectId)
                         .FirstOrDefaultAsync();
                 }
             }
@@ -105,18 +105,18 @@ namespace task_management_system.Services
         public async Task<bool> UpdateProjectAsync(string projectId, CreateProjectViewModel model, string userId)
         {
             var filter = Builders<Project>.Filter.And(
-                Builders<Project>.Filter.Eq(p => p.Id, projectId),
+                Builders<Project>.Filter.Eq(p => p.ProjectId, projectId),
                 Builders<Project>.Filter.Eq(p => p.UserId, userId)
             );
 
             var update = Builders<Project>.Update
-                .Set(p => p.Name, model.Name)
+                .Set(p => p.ProjectName, model.Name)
                 .Set(p => p.Description, model.Description)
-                .Set(p => p.Status, model.Status)
+                .Set(p => p.ProjectStatus, model.Status)
                 .Set(p => p.Priority, model.Priority)
                 .Set(p => p.StartDate, model.StartDate)
                 .Set(p => p.DueDate, model.DueDate)
-                .Set(p => p.Progress, model.Progress)
+                .Set(p => p.ProgressPercentage, model.Progress)
                 .Set(p => p.UpdatedAt, DateTime.UtcNow);
 
             var result = await _context.Projects.UpdateOneAsync(filter, update);
@@ -126,7 +126,7 @@ namespace task_management_system.Services
         public async Task<bool> DeleteProjectAsync(string projectId, string userId)
         {
             var filter = Builders<Project>.Filter.And(
-                Builders<Project>.Filter.Eq(p => p.Id, projectId),
+                Builders<Project>.Filter.Eq(p => p.ProjectId, projectId),
                 Builders<Project>.Filter.Eq(p => p.UserId, userId)
             );
 
@@ -137,12 +137,12 @@ namespace task_management_system.Services
         public async Task<bool> UpdateProgressAsync(string projectId, int progress, string userId)
         {
             var filter = Builders<Project>.Filter.And(
-                Builders<Project>.Filter.Eq(p => p.Id, projectId),
+                Builders<Project>.Filter.Eq(p => p.ProjectId, projectId),
                 Builders<Project>.Filter.Eq(p => p.UserId, userId)
             );
 
             var update = Builders<Project>.Update
-                .Set(p => p.Progress, progress)
+                .Set(p => p.ProgressPercentage, progress)
                 .Set(p => p.UpdatedAt, DateTime.UtcNow);
 
             var result = await _context.Projects.UpdateOneAsync(filter, update);

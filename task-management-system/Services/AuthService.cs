@@ -18,6 +18,7 @@ namespace task_management_system.Services
         Task<(bool success, string message)> UpdateProfileAsync(string userId, string firstName, string lastName, string email, int age, string address);
         Task<(bool success, string message)> UpdateProfilePictureAsync(string userId, string base64Image, string contentType);
         Task<(bool success, string message)> ChangePasswordAsync(string userId, string currentPassword, string newPassword);
+        Task<(bool success, string message)> DeleteAccountAsync(string userId);
     }
 
     public class AuthService : IAuthService
@@ -53,9 +54,9 @@ namespace task_management_system.Services
                 PasswordHash = _passwordService.HashPassword(password),
                 FirstName = firstName,
                 LastName = lastName,
-                Age = age,
+                BirthDate = DateTime.UtcNow.AddYears(-age), // Convert age to approximate birth date
                 Address = address ?? string.Empty,
-                IsEmailVerified = false, 
+                EmailVerifiedAt = null, // Not verified yet
                 CreatedAt = DateTime.UtcNow
             };
 
@@ -146,10 +147,12 @@ namespace task_management_system.Services
 
                 // Mark token as used
                 var tokenUpdate = Builders<EmailVerificationToken>.Update.Set(t => t.IsUsed, true);
-                await _context.EmailVerificationTokens.UpdateOneAsync(t => t.Id == token.Id, tokenUpdate);
+                await _context.EmailVerificationTokens.UpdateOneAsync(t => t.TokenId == token.TokenId, tokenUpdate);
 
                 // Update user's email verification status
-                var userUpdate = Builders<User>.Update.Set(u => u.IsEmailVerified, true);
+                var userUpdate = Builders<User>.Update
+                    .Set(u => u.EmailVerifiedAt, DateTime.UtcNow)
+                    .Set(u => u.UpdatedAt, DateTime.UtcNow);
                 var updateResult = await _context.Users.UpdateOneAsync(u => u.Email == email, userUpdate);
 
                 if (updateResult.ModifiedCount == 0)
@@ -189,7 +192,7 @@ namespace task_management_system.Services
                 var token = new PasswordResetToken
                 {
                     Email = email,
-                    Token = resetToken,
+                    TokenHash = resetToken,
                     ExpiresAt = DateTime.UtcNow.AddHours(1), 
                     CreatedAt = DateTime.UtcNow
                 };
@@ -213,7 +216,7 @@ namespace task_management_system.Services
             {
                 // Find the password reset token
                 var resetToken = await _context.PasswordResetTokens
-                    .Find(t => t.Email == email && t.Token == token)
+                    .Find(t => t.Email == email && t.TokenHash == token)
                     .FirstOrDefaultAsync();
 
                 if (resetToken == null)
@@ -228,7 +231,7 @@ namespace task_management_system.Services
                     return (false, "User not found.");
 
                 // Delete the used password reset token
-                await _context.PasswordResetTokens.DeleteOneAsync(t => t.Id == resetToken.Id);
+                await _context.PasswordResetTokens.DeleteOneAsync(t => t.TokenId == resetToken.TokenId);
 
                 return (true, "Password reset successfully. You can now login with your new password.");
             }
@@ -243,7 +246,7 @@ namespace task_management_system.Services
             try
             {
                 var resetToken = await _context.PasswordResetTokens
-                    .Find(t => t.Email == email && t.Token == token)
+                    .Find(t => t.Email == email && t.TokenHash == token)
                     .FirstOrDefaultAsync();
 
                 return resetToken != null && resetToken.ExpiresAt > DateTime.UtcNow;
@@ -273,7 +276,7 @@ namespace task_management_system.Services
             try
             {
                 return await _context.Users
-                    .Find(u => u.Id == userId)
+                    .Find(u => u.UserId == userId)
                     .FirstOrDefaultAsync();
             }
             catch (Exception)
@@ -287,7 +290,7 @@ namespace task_management_system.Services
             try
             {
                 var user = await _context.Users
-                    .Find(u => u.Id == userId)
+                    .Find(u => u.UserId == userId)
                     .FirstOrDefaultAsync();
 
                 if (user == null)
@@ -297,7 +300,7 @@ namespace task_management_system.Services
                 if (user.Email != email)
                 {
                     var existingUser = await _context.Users
-                        .Find(u => u.Email == email && u.Id != userId)
+                        .Find(u => u.Email == email && u.UserId != userId)
                         .FirstOrDefaultAsync();
 
                     if (existingUser != null)
@@ -309,11 +312,12 @@ namespace task_management_system.Services
                     .Set(u => u.FirstName, firstName)
                     .Set(u => u.LastName, lastName)
                     .Set(u => u.Email, email)
-                    .Set(u => u.Age, age)
-                    .Set(u => u.Address, address);
+                    .Set(u => u.BirthDate, DateTime.UtcNow.AddYears(-age)) // Convert age to birth date
+                    .Set(u => u.Address, address)
+                    .Set(u => u.UpdatedAt, DateTime.UtcNow);
 
                 var result = await _context.Users.UpdateOneAsync(
-                    u => u.Id == userId,
+                    u => u.UserId == userId,
                     update
                 );
 
@@ -333,7 +337,7 @@ namespace task_management_system.Services
             try
             {
                 var user = await _context.Users
-                    .Find(u => u.Id == userId)
+                    .Find(u => u.UserId == userId)
                     .FirstOrDefaultAsync();
 
                 if (user == null)
@@ -348,10 +352,11 @@ namespace task_management_system.Services
 
                 // Update password
                 var update = Builders<User>.Update
-                    .Set(u => u.PasswordHash, newPasswordHash);
+                    .Set(u => u.PasswordHash, newPasswordHash)
+                    .Set(u => u.UpdatedAt, DateTime.UtcNow);
 
                 var result = await _context.Users.UpdateOneAsync(
-                    u => u.Id == userId,
+                    u => u.UserId == userId,
                     update
                 );
 
@@ -371,7 +376,7 @@ namespace task_management_system.Services
             try
             {
                 var user = await _context.Users
-                    .Find(u => u.Id == userId)
+                    .Find(u => u.UserId == userId)
                     .FirstOrDefaultAsync();
 
                 if (user == null)
@@ -379,11 +384,12 @@ namespace task_management_system.Services
 
                 // Update profile picture and content type
                 var update = Builders<User>.Update
-                    .Set(u => u.ProfilePicture, base64Image)
-                    .Set(u => u.ProfilePictureContentType, contentType);
+                    .Set(u => u.ProfilePictureUrl, base64Image)
+                    .Set(u => u.ProfilePictureContentType, contentType)
+                    .Set(u => u.UpdatedAt, DateTime.UtcNow);
 
                 var result = await _context.Users.UpdateOneAsync(
-                    u => u.Id == userId,
+                    u => u.UserId == userId,
                     update
                 );
 
@@ -395,6 +401,60 @@ namespace task_management_system.Services
             catch (Exception ex)
             {
                 return (false, $"Error updating profile picture: {ex.Message}");
+            }
+        }
+
+        public async Task<(bool success, string message)> DeleteAccountAsync(string userId)
+        {
+            try
+            {
+                // Delete all related data first
+                
+                // Delete user's tasks
+                await _context.Tasks.DeleteManyAsync(t => t.UserId == userId);
+                
+                // Delete user's projects (they created)
+                await _context.Projects.DeleteManyAsync(p => p.UserId == userId);
+                
+                // Remove user from project memberships
+                await _context.ProjectMembers.DeleteManyAsync(pm => pm.UserId == userId);
+                
+                // Delete project invitations sent to or by user
+                await _context.ProjectInvitations.DeleteManyAsync(pi => pi.InvitedUserId == userId || pi.InvitedByUserId == userId);
+                
+                // Delete user's comments
+                await _context.Comments.DeleteManyAsync(c => c.UserId == userId);
+                
+                // Delete user's work logs
+                await _context.WorkLogs.DeleteManyAsync(w => w.UserId == userId);
+                
+                // Delete user's notifications
+                await _context.Notifications.DeleteManyAsync(n => n.UserId == userId);
+                
+                // Delete user's activities
+                await _context.UserActivities.DeleteManyAsync(a => a.UserId == userId);
+                
+                // Delete password reset tokens by email (tokens use Email not UserId)
+                var user = await _context.Users.Find(u => u.UserId == userId).FirstOrDefaultAsync();
+                if (user != null)
+                {
+                    await _context.PasswordResetTokens.DeleteManyAsync(p => p.Email == user.Email);
+                    await _context.EmailVerificationTokens.DeleteManyAsync(e => e.Email == user.Email);
+                }
+                
+                // Finally, delete the user account
+                var result = await _context.Users.DeleteOneAsync(u => u.UserId == userId);
+                
+                if (result.DeletedCount > 0)
+                {
+                    return (true, "Account and all associated data deleted successfully");
+                }
+                
+                return (false, "Failed to delete account");
+            }
+            catch (Exception ex)
+            {
+                return (false, $"Error deleting account: {ex.Message}");
             }
         }
 

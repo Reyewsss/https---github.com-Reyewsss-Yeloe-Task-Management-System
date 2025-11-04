@@ -12,11 +12,6 @@
         <h1><i class="fas fa-calendar"></i> Planner</h1>
         <p>Manage your schedule and view all your tasks and projects</p>
     </div>
-    <div class="header-right">
-        <button class="btn btn-secondary" id="syncGoogleBtn" title="Sync with Google Calendar">
-            <i class="fab fa-google"></i> Sync Google Calendar
-        </button>
-    </div>
 </div>
 
 <!-- Calendar View Controls -->
@@ -105,50 +100,6 @@
             </button>
             <button class="btn btn-danger" id="deleteEventBtn">
                 <i class="fas fa-trash"></i> Delete
-            </button>
-        </div>
-    </div>
-</div>
-
-<!-- Google Calendar Sync Modal -->
-<div class="sync-modal-overlay" id="syncModalOverlay">
-    <div class="sync-modal">
-        <div class="sync-modal-header">
-            <h3><i class="fab fa-google"></i> Connect Google Calendar</h3>
-            <button class="close-btn" id="closeSyncModal">
-                <i class="fas fa-times"></i>
-            </button>
-        </div>
-        <div class="sync-modal-body">
-            <div class="sync-info">
-                <i class="fas fa-info-circle"></i>
-                <p>Connect your Google Calendar to sync your tasks and events seamlessly.</p>
-            </div>
-            <div class="sync-features">
-                <div class="feature-item">
-                    <i class="fas fa-check-circle"></i>
-                    <span>Two-way sync with Google Calendar</span>
-                </div>
-                <div class="feature-item">
-                    <i class="fas fa-check-circle"></i>
-                    <span>Automatic task updates</span>
-                </div>
-                <div class="feature-item">
-                    <i class="fas fa-check-circle"></i>
-                    <span>View all events in one place</span>
-                </div>
-            </div>
-            <div class="sync-status" id="syncStatus" style="display: none;">
-                <i class="fas fa-spinner fa-spin"></i>
-                <p>Connecting to Google Calendar...</p>
-            </div>
-        </div>
-        <div class="sync-modal-footer">
-            <button class="btn btn-secondary" data-dismiss="modal" id="cancelSyncBtn">
-                Cancel
-            </button>
-            <button class="btn btn-primary" id="confirmSyncBtn">
-                <i class="fab fa-google"></i> Connect Now
             </button>
         </div>
     </div>

@@ -617,88 +617,105 @@ function handlePreferenceToggle(event) {
 function initializeDangerZone() {
     const deleteAccountBtn = document.getElementById('delete-account-btn');
     if (deleteAccountBtn) {
-        deleteAccountBtn.addEventListener('click', openDeleteAccountModal);
+        deleteAccountBtn.addEventListener('click', deleteAccount);
     }
 }
 
-function openDeleteAccountModal() {
-    const modalHTML = `
-        <div class="modal fade" id="deleteAccountModal" tabindex="-1" aria-labelledby="deleteAccountModalLabel" aria-hidden="true">
-            <div class="modal-dialog">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title text-danger" id="deleteAccountModalLabel">
-                            <i class="fas fa-exclamation-triangle"></i> Delete Account
-                        </h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                    </div>
-                    <div class="modal-body">
-                        <div class="alert alert-danger">
-                            <strong>Warning:</strong> This action cannot be undone. This will permanently delete your account and remove all your data from our servers.
-                        </div>
-                        <p>Please type <strong>DELETE</strong> to confirm:</p>
-                        <input type="text" class="form-control" id="deleteConfirmation" placeholder="Type DELETE to confirm">
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-outline" data-bs-dismiss="modal">Cancel</button>
-                        <button type="button" class="btn btn-danger" id="confirmDeleteBtn" disabled>
-                            <i class="fas fa-trash"></i> Delete My Account
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    `;
-    
-    if (!document.getElementById('deleteAccountModal')) {
-        document.body.insertAdjacentHTML('beforeend', modalHTML);
-    }
-    
-    const modal = new bootstrap.Modal(document.getElementById('deleteAccountModal'));
-    modal.show();
-    
-    // Enable delete button only when DELETE is typed
-    const confirmInput = document.getElementById('deleteConfirmation');
-    const confirmBtn = document.getElementById('confirmDeleteBtn');
-    
-    confirmInput.addEventListener('input', function() {
-        confirmBtn.disabled = this.value !== 'DELETE';
-    });
-    
-    confirmBtn.addEventListener('click', handleAccountDeletion);
+function deleteAccount() {
+    showDeleteAccountModal();
 }
 
-function handleAccountDeletion() {
-    const confirmBtn = document.getElementById('confirmDeleteBtn');
-    const originalText = confirmBtn.innerHTML;
-    confirmBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Deleting...';
-    confirmBtn.disabled = true;
+function showDeleteAccountModal() {
+    const modal = document.getElementById('deleteAccountModalOverlay');
+    if (modal) {
+        modal.classList.add('active');
+        document.body.style.overflow = 'hidden';
+        
+        // Reset form
+        document.getElementById('deletePasswordConfirm').value = '';
+        document.getElementById('deleteTypeConfirm').value = '';
+        document.getElementById('deleteUnderstandCheck').checked = false;
+        document.getElementById('confirmDeleteButton').disabled = true;
+        
+        // Add validation listeners
+        setupDeleteValidation();
+    }
+}
+
+function closeDeleteAccountModal() {
+    const modal = document.getElementById('deleteAccountModalOverlay');
+    if (modal) {
+        modal.classList.remove('active');
+        document.body.style.overflow = '';
+    }
+}
+
+function setupDeleteValidation() {
+    const passwordInput = document.getElementById('deletePasswordConfirm');
+    const typeInput = document.getElementById('deleteTypeConfirm');
+    const checkbox = document.getElementById('deleteUnderstandCheck');
+    const deleteButton = document.getElementById('confirmDeleteButton');
     
-    fetch('/Account/DeleteAccount', {
-        method: 'POST',
-        headers: {
-            'RequestVerificationToken': getAntiForgeryToken()
-        }
-    })
-    .then(response => response.json())
-    .then(data => {
+    function validateForm() {
+        const passwordFilled = passwordInput.value.trim().length > 0;
+        const typedCorrectly = typeInput.value === 'DELETE MY ACCOUNT';
+        const checkboxChecked = checkbox.checked;
+        
+        deleteButton.disabled = !(passwordFilled && typedCorrectly && checkboxChecked);
+    }
+    
+    passwordInput.addEventListener('input', validateForm);
+    typeInput.addEventListener('input', validateForm);
+    checkbox.addEventListener('change', validateForm);
+}
+
+async function confirmDeleteAccount() {
+    const password = document.getElementById('deletePasswordConfirm').value;
+    const confirmText = document.getElementById('deleteTypeConfirm').value;
+    const understood = document.getElementById('deleteUnderstandCheck').checked;
+    
+    if (!password || confirmText !== 'DELETE MY ACCOUNT' || !understood) {
+        showNotification('error', 'Please complete all confirmation steps');
+        return;
+    }
+    
+    // Show final confirmation
+    if (!confirm('Are you absolutely sure? This is your last chance to cancel. Your account will be permanently deleted.')) {
+        return;
+    }
+    
+    const deleteButton = document.getElementById('confirmDeleteButton');
+    const originalText = deleteButton.innerHTML;
+    deleteButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Deleting...';
+    deleteButton.disabled = true;
+    
+    try {
+        const response = await fetch('/Account/DeleteAccount', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ password })
+        });
+        
+        const data = await response.json();
+        
         if (data.success) {
-            showSuccessMessage('Account deleted successfully. Redirecting...');
+            showNotification('success', 'Account deleted successfully. Redirecting...');
             setTimeout(() => {
-                window.location.href = '/';
+                window.location.href = '/Auth/Login';
             }, 2000);
         } else {
-            showErrorMessage('Failed to delete account. Please try again.');
-            confirmBtn.innerHTML = originalText;
-            confirmBtn.disabled = false;
+            showNotification('error', data.message || 'Failed to delete account');
+            deleteButton.innerHTML = originalText;
+            deleteButton.disabled = false;
         }
-    })
-    .catch(error => {
+    } catch (error) {
         console.error('Error deleting account:', error);
-        showErrorMessage('An error occurred while deleting your account.');
-        confirmBtn.innerHTML = originalText;
-        confirmBtn.disabled = false;
-    });
+        showNotification('error', 'An error occurred while deleting your account');
+        deleteButton.innerHTML = originalText;
+        deleteButton.disabled = false;
+    }
 }
 
 // Utility Functions
@@ -747,6 +764,147 @@ function getAntiForgeryToken() {
     return document.querySelector('input[name="__RequestVerificationToken"]')?.value || '';
 }
 
+// Security Section Button Functions
+function changePassword() {
+    showChangePasswordModal();
+}
+
+async function viewActivity() {
+    showActivityModal();
+    await loadActivities();
+}
+
+function showActivityModal() {
+    const modal = document.getElementById('activityModalOverlay');
+    if (modal) {
+        modal.classList.add('active');
+        document.body.style.overflow = 'hidden';
+    }
+}
+
+function closeActivityModal() {
+    const modal = document.getElementById('activityModalOverlay');
+    if (modal) {
+        modal.classList.remove('active');
+        document.body.style.overflow = '';
+    }
+}
+
+async function loadActivities() {
+    const activityList = document.getElementById('activityList');
+    
+    try {
+        const response = await fetch('/Account/GetUserActivities', {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+
+        const data = await response.json();
+
+        if (data.success && data.activities && data.activities.length > 0) {
+            activityList.innerHTML = data.activities.map(activity => {
+                const icon = getActivityIcon(activity.activityType);
+                const iconClass = getActivityIconClass(activity.activityType);
+                const timeAgo = formatTimeAgo(activity.createdAt);
+                
+                return `
+                    <div class="activity-item">
+                        <div class="activity-icon ${iconClass}">
+                            <i class="${icon}"></i>
+                        </div>
+                        <div class="activity-content">
+                            <div class="activity-title">${activity.description}</div>
+                            ${activity.ipAddress ? `<div class="activity-description">From IP: ${activity.ipAddress}</div>` : ''}
+                            <div class="activity-meta">
+                                <span><i class="fas fa-clock"></i> ${timeAgo}</span>
+                                ${activity.userAgent ? `<span><i class="fas fa-desktop"></i> ${getBrowserInfo(activity.userAgent)}</span>` : ''}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        } else {
+            activityList.innerHTML = `
+                <div class="empty-activity">
+                    <i class="fas fa-clipboard-list"></i>
+                    <p>No activity recorded yet</p>
+                </div>
+            `;
+        }
+    } catch (error) {
+        activityList.innerHTML = `
+            <div class="empty-activity">
+                <i class="fas fa-exclamation-circle"></i>
+                <p>Failed to load activities</p>
+            </div>
+        `;
+    }
+}
+
+function getActivityIcon(activityType) {
+    const icons = {
+        'Login': 'fas fa-sign-in-alt',
+        'Logout': 'fas fa-sign-out-alt',
+        'ProfileUpdate': 'fas fa-user-edit',
+        'PasswordChange': 'fas fa-key',
+        'ProfilePictureUpdate': 'fas fa-camera',
+        'EmailVerification': 'fas fa-envelope-open',
+        'PasswordReset': 'fas fa-unlock-alt',
+        'TaskCreated': 'fas fa-plus-circle',
+        'TaskUpdated': 'fas fa-edit',
+        'TaskDeleted': 'fas fa-trash',
+        'ProjectCreated': 'fas fa-folder-plus',
+        'ProjectUpdated': 'fas fa-folder',
+        'ProjectDeleted': 'fas fa-folder-minus',
+        'CommentAdded': 'fas fa-comment',
+        'WorkSubmitted': 'fas fa-briefcase'
+    };
+    return icons[activityType] || 'fas fa-circle';
+}
+
+function getActivityIconClass(activityType) {
+    if (activityType === 'Login') return 'login';
+    if (activityType === 'Logout') return 'logout';
+    if (activityType.includes('Profile') || activityType.includes('Email')) return 'profile';
+    if (activityType.includes('Password')) return 'password';
+    if (activityType.includes('Task')) return 'task';
+    if (activityType.includes('Project')) return 'project';
+    if (activityType.includes('Comment')) return 'comment';
+    if (activityType.includes('Work')) return 'work';
+    return 'profile';
+}
+
+function formatTimeAgo(dateString) {
+    const date = new Date(dateString);
+    const now = new Date();
+    const seconds = Math.floor((now - date) / 1000);
+
+    if (seconds < 60) return 'Just now';
+    if (seconds < 3600) return `${Math.floor(seconds / 60)} minutes ago`;
+    if (seconds < 86400) return `${Math.floor(seconds / 3600)} hours ago`;
+    if (seconds < 604800) return `${Math.floor(seconds / 86400)} days ago`;
+    
+    return date.toLocaleDateString('en-US', { 
+        month: 'short', 
+        day: 'numeric', 
+        year: date.getFullYear() !== now.getFullYear() ? 'numeric' : undefined 
+    });
+}
+
+function getBrowserInfo(userAgent) {
+    if (!userAgent) return 'Unknown';
+    
+    if (userAgent.includes('Chrome')) return 'Chrome';
+    if (userAgent.includes('Firefox')) return 'Firefox';
+    if (userAgent.includes('Safari') && !userAgent.includes('Chrome')) return 'Safari';
+    if (userAgent.includes('Edge')) return 'Edge';
+    if (userAgent.includes('Opera')) return 'Opera';
+    
+    return 'Unknown Browser';
+}
+
 function showSuccessMessage(message) {
     showMessage(message, 'success');
 }
@@ -760,13 +918,42 @@ function showNotification(type, message) {
 }
 
 function showMessage(message, type) {
+    // Determine colors and icons based on type
+    let bgColor, icon, title;
+    switch(type) {
+        case 'success':
+            bgColor = 'bg-success';
+            icon = 'fa-check-circle';
+            title = 'Success';
+            break;
+        case 'error':
+            bgColor = 'bg-danger';
+            icon = 'fa-exclamation-circle';
+            title = 'Error';
+            break;
+        case 'info':
+            bgColor = 'bg-info';
+            icon = 'fa-info-circle';
+            title = 'Info';
+            break;
+        case 'warning':
+            bgColor = 'bg-warning';
+            icon = 'fa-exclamation-triangle';
+            title = 'Warning';
+            break;
+        default:
+            bgColor = 'bg-primary';
+            icon = 'fa-bell';
+            title = 'Notification';
+    }
+    
     // Create toast notification
     const toastHTML = `
         <div class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index: 9999;">
-            <div class="toast ${type === 'success' ? 'bg-success' : 'bg-danger'} text-white" role="alert">
-                <div class="toast-header ${type === 'success' ? 'bg-success' : 'bg-danger'} text-white">
-                    <i class="fas ${type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle'} me-2"></i>
-                    <strong class="me-auto">${type === 'success' ? 'Success' : 'Error'}</strong>
+            <div class="toast ${bgColor} text-white" role="alert">
+                <div class="toast-header ${bgColor} text-white">
+                    <i class="fas ${icon} me-2"></i>
+                    <strong class="me-auto">${title}</strong>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast"></button>
                 </div>
                 <div class="toast-body">

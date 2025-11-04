@@ -3,46 +3,48 @@ using MongoDB.Bson.Serialization.Attributes;
 
 namespace task_management_system.Models
 {
+    [BsonCollection("tbl_project_invitations")]
     public class ProjectInvitation
     {
         [BsonId]
         [BsonRepresentation(BsonType.ObjectId)]
-        public string? Id { get; set; }
+        [BsonElement("invitation_id")]
+        public string? InvitationId { get; set; }
 
-        [BsonElement("projectId")]
+        [BsonElement("project_id")]
         [BsonRepresentation(BsonType.ObjectId)]
         public string ProjectId { get; set; } = string.Empty;
 
-        [BsonElement("projectName")]
+        [BsonElement("project_name")]
         public string ProjectName { get; set; } = string.Empty;
 
-        [BsonElement("invitedByUserId")]
+        [BsonElement("invited_by_user_id")]
         [BsonRepresentation(BsonType.ObjectId)]
         public string InvitedByUserId { get; set; } = string.Empty;
 
-        [BsonElement("invitedByUserName")]
+        [BsonElement("invited_by_user_name")]
         public string InvitedByUserName { get; set; } = string.Empty;
 
-        [BsonElement("invitedUserEmail")]
+        [BsonElement("invited_user_email")]
         public string InvitedUserEmail { get; set; } = string.Empty;
 
-        [BsonElement("invitedUserId")]
+        [BsonElement("invited_user_id")]
         [BsonRepresentation(BsonType.ObjectId)]
         public string? InvitedUserId { get; set; }
 
-        [BsonElement("status")]
-        public InvitationStatus Status { get; set; } = InvitationStatus.Pending;
+        [BsonElement("invitation_status")]
+        public InvitationStatus InvitationStatus { get; set; } = InvitationStatus.Pending;
 
         [BsonElement("role")]
         public ProjectRole Role { get; set; } = ProjectRole.Viewer;
 
-        [BsonElement("invitedAt")]
+        [BsonElement("invited_at")]
         public DateTime InvitedAt { get; set; } = DateTime.UtcNow;
 
-        [BsonElement("respondedAt")]
+        [BsonElement("responded_at")]
         public DateTime? RespondedAt { get; set; }
 
-        [BsonElement("expiresAt")]
+        [BsonElement("expires_at")]
         public DateTime ExpiresAt { get; set; } = DateTime.UtcNow.AddDays(7);
     }
 

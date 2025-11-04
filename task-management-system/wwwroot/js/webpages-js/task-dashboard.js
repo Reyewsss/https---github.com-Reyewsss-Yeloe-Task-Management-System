@@ -6,6 +6,7 @@
     let comments = [];
     let workLog = [];
     let selectedFile = null;
+    let selectedCommentFile = null;
 
     // Initialize
     document.addEventListener('DOMContentLoaded', function() {
@@ -19,6 +20,16 @@
         loadComments();
         loadWorkLog();
         setupDragAndDrop();
+        
+        // Auto-refresh comments every 5 seconds to show new comments from other users
+        setInterval(() => {
+            loadComments();
+        }, 5000);
+        
+        // Auto-refresh work log every 10 seconds
+        setInterval(() => {
+            loadWorkLog();
+        }, 10000);
     }
 
     // File Upload Functions
@@ -90,32 +101,112 @@
         }, false);
     }
 
+    // Comment File Functions
+    window.handleCommentFileSelect = function(event) {
+        const file = event.target.files[0];
+        if (file) {
+            selectedCommentFile = file;
+            displayCommentFilePreview(file);
+        }
+    };
+
+    window.removeCommentFile = function() {
+        selectedCommentFile = null;
+        document.getElementById('commentFileInput').value = '';
+        document.getElementById('commentFilePreview').style.display = 'none';
+    };
+
+    function displayCommentFilePreview(file) {
+        const filePreview = document.getElementById('commentFilePreview');
+        const fileName = document.getElementById('commentFileName');
+        const fileIcon = document.getElementById('commentFileIcon');
+
+        // Set appropriate icon based on file type
+        const iconClass = getFileIcon(file.type, file.name);
+        fileIcon.className = iconClass;
+
+        fileName.textContent = file.name;
+        filePreview.style.display = 'block';
+    }
+
+    function getFileIcon(fileType, fileName) {
+        const extension = fileName.split('.').pop().toLowerCase();
+        
+        // Images
+        if (fileType.startsWith('image/') || ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'svg', 'webp'].includes(extension)) {
+            return 'fas fa-file-image';
+        }
+        // PDFs
+        if (fileType === 'application/pdf' || extension === 'pdf') {
+            return 'fas fa-file-pdf';
+        }
+        // Word documents
+        if (fileType.includes('word') || ['doc', 'docx'].includes(extension)) {
+            return 'fas fa-file-word';
+        }
+        // Excel documents
+        if (fileType.includes('excel') || fileType.includes('spreadsheet') || ['xls', 'xlsx', 'csv'].includes(extension)) {
+            return 'fas fa-file-excel';
+        }
+        // PowerPoint
+        if (fileType.includes('presentation') || ['ppt', 'pptx'].includes(extension)) {
+            return 'fas fa-file-powerpoint';
+        }
+        // Archives
+        if (['zip', 'rar', '7z', 'tar', 'gz'].includes(extension)) {
+            return 'fas fa-file-archive';
+        }
+        // Code files
+        if (['js', 'ts', 'css', 'html', 'json', 'xml', 'cs', 'java', 'py', 'php'].includes(extension)) {
+            return 'fas fa-file-code';
+        }
+        // Text files
+        if (fileType.startsWith('text/') || extension === 'txt') {
+            return 'fas fa-file-alt';
+        }
+        // Videos
+        if (fileType.startsWith('video/') || ['mp4', 'avi', 'mov', 'wmv', 'flv', 'mkv'].includes(extension)) {
+            return 'fas fa-file-video';
+        }
+        // Audio
+        if (fileType.startsWith('audio/') || ['mp3', 'wav', 'ogg', 'flac'].includes(extension)) {
+            return 'fas fa-file-audio';
+        }
+        
+        // Default
+        return 'fas fa-file';
+    }
+
     // Comments Functions
     window.addComment = async function() {
         const commentText = document.getElementById('commentText');
         const text = commentText.value.trim();
 
-        if (!text) {
-            showNotification('error', 'Please enter a comment');
+        if (!text && !selectedCommentFile) {
+            showNotification('error', 'Please enter a comment or attach a file');
             return;
         }
 
         try {
+            const formData = new FormData();
+            formData.append('taskId', taskId);
+            formData.append('comment', text);
+
+            // Add file if selected
+            if (selectedCommentFile) {
+                formData.append('file', selectedCommentFile);
+            }
+
             const response = await fetch(window.taskData.addCommentUrl, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    taskId: taskId,
-                    comment: text
-                })
+                body: formData
             });
 
             const result = await response.json();
 
             if (result.success) {
                 commentText.value = '';
+                removeCommentFile();
                 showNotification('success', 'Comment added successfully!');
                 loadComments();
             } else {
@@ -157,7 +248,14 @@
             return;
         }
 
-        const commentsHtml = comments.map(comment => `
+        // Reverse comments to show newest at bottom (stack)
+        const sortedComments = [...comments].reverse();
+
+        const commentsHtml = sortedComments.map(comment => {
+            // Convert text to HTML with clickable links
+            const commentTextWithLinks = linkifyText(comment.text || comment.commentText);
+            
+            return `
             <div class="comment-item">
                 <div class="comment-header">
                     <div class="comment-author-info">
@@ -166,13 +264,67 @@
                             : '<i class="fas fa-user-circle"></i>'}
                         <span class="comment-author">${escapeHtml(comment.userName)}</span>
                     </div>
-                    <span class="comment-date">${comment.timeAgo}</span>
+                    <span class="comment-date">${comment.timeAgo || formatDate(comment.createdAt)}</span>
                 </div>
-                <div class="comment-text">${escapeHtml(comment.text)}</div>
+                <div class="comment-text">${commentTextWithLinks}</div>
+                ${comment.fileUrl ? `
+                    <div class="comment-attachment">
+                        <a href="${comment.fileUrl}" target="_blank" class="attachment-link" download>
+                            <i class="${getFileIcon(comment.fileType || '', comment.fileName || '')}"></i>
+                            <span>${escapeHtml(comment.fileName || 'Download file')}</span>
+                            <i class="fas fa-download"></i>
+                        </a>
+                    </div>
+                ` : ''}
             </div>
-        `).join('');
+        `;
+        }).join('');
 
         commentsList.innerHTML = commentsHtml;
+        
+        // Scroll to bottom to show latest comment
+        commentsList.scrollTop = commentsList.scrollHeight;
+    }
+
+    function linkifyText(text) {
+        if (!text) return '';
+        
+        // Escape HTML first
+        text = escapeHtml(text);
+        
+        // URL regex pattern
+        const urlPattern = /(https?:\/\/[^\s]+)/g;
+        
+        // Replace URLs with clickable links
+        text = text.replace(urlPattern, '<a href="$1" target="_blank" rel="noopener noreferrer" class="comment-link">$1</a>');
+        
+        // Convert line breaks to <br>
+        text = text.replace(/\n/g, '<br>');
+        
+        return text;
+    }
+
+    function formatDate(dateString) {
+        if (!dateString) return '';
+        
+        const date = new Date(dateString);
+        const now = new Date();
+        const diffInSeconds = Math.floor((now - date) / 1000);
+        
+        if (diffInSeconds < 60) {
+            return 'Just now';
+        } else if (diffInSeconds < 3600) {
+            const minutes = Math.floor(diffInSeconds / 60);
+            return `${minutes} ${minutes === 1 ? 'minute' : 'minutes'} ago`;
+        } else if (diffInSeconds < 86400) {
+            const hours = Math.floor(diffInSeconds / 3600);
+            return `${hours} ${hours === 1 ? 'hour' : 'hours'} ago`;
+        } else if (diffInSeconds < 604800) {
+            const days = Math.floor(diffInSeconds / 86400);
+            return `${days} ${days === 1 ? 'day' : 'days'} ago`;
+        } else {
+            return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+        }
     }
 
     // Work Functions

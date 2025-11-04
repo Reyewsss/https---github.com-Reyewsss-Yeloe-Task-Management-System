@@ -312,6 +312,109 @@
     padding-top: 20px;
 }
 
+.add-comment-form .form-actions {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.add-comment-form .form-actions .btn-icon {
+    padding: 10px 14px;
+    min-width: auto;
+}
+
+.comment-file-preview {
+    margin-top: 10px;
+    padding: 10px;
+    background: #f8f9fa;
+    border-radius: 6px;
+    border: 1px solid #dee2e6;
+}
+
+.comment-file-preview .file-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.comment-file-preview .file-info i {
+    font-size: 1.5rem;
+    color: #6A4018;
+}
+
+.comment-file-preview .file-name {
+    flex: 1;
+    font-size: 14px;
+    color: #333;
+    word-break: break-all;
+}
+
+.comment-file-preview .remove-file {
+    background: none;
+    border: none;
+    color: #dc3545;
+    cursor: pointer;
+    font-size: 1.2rem;
+    padding: 5px;
+    transition: color 0.3s ease;
+}
+
+.comment-file-preview .remove-file:hover {
+    color: #c82333;
+}
+
+.comment-attachment {
+    margin-top: 10px;
+    padding: 10px;
+    background: #f8f9fa;
+    border-radius: 6px;
+    border: 1px solid #dee2e6;
+}
+
+.attachment-link {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #6A4018;
+    text-decoration: none;
+    font-size: 14px;
+    transition: all 0.3s ease;
+}
+
+.attachment-link:hover {
+    color: #8B5A2B;
+    transform: translateX(3px);
+}
+
+.attachment-link i:first-child {
+    font-size: 1.5rem;
+}
+
+.attachment-link span {
+    flex: 1;
+}
+
+.attachment-link i:last-child {
+    font-size: 1rem;
+    opacity: 0.7;
+}
+
+.comment-link {
+    color: #2196F3;
+    text-decoration: underline;
+    word-break: break-all;
+}
+
+.comment-link:hover {
+    color: #1976D2;
+}
+
+.comments-list {
+    max-height: 400px;
+    overflow-y: auto;
+    scroll-behavior: smooth;
+}
+
 /* Work Section */
 .work-card {
      position: relative;

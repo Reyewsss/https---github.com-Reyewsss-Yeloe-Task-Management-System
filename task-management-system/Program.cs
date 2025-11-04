@@ -44,6 +44,9 @@ builder.Services.AddScoped<ITaskService, TaskService>();
 builder.Services.AddScoped<IProjectService, ProjectService>(); 
 builder.Services.AddScoped<IProjectInvitationService, ProjectInvitationService>();
 builder.Services.AddScoped<IUserSessionService, UserSessionService>(); // Add user session service
+builder.Services.AddScoped<IActivityService, ActivityService>(); // Add activity tracking service
+builder.Services.AddScoped<IPreferencesService, PreferencesService>(); // Add preferences service
+builder.Services.AddScoped<ITaskStatusLabelService, TaskStatusLabelService>(); // Add task status label service
 
 // Add background service for deadline notifications
 builder.Services.AddHostedService<DeadlineNotificationBackgroundService>();

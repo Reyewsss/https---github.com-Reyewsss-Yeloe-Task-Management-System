@@ -14,19 +14,22 @@ namespace task_management_system.Controllers
         private readonly IUserSessionService _userSessionService;
         private readonly MongoDbContext _context;
         private readonly IEncryptionService _encryptionService;
+        private readonly INotificationService _notificationService;
 
         public TaskController(
             ITaskService taskService, 
             IProjectService projectService, 
             IUserSessionService userSessionService,
             MongoDbContext context,
-            IEncryptionService encryptionService)
+            IEncryptionService encryptionService,
+            INotificationService notificationService)
         {
             _taskService = taskService;
             _projectService = projectService;
             _userSessionService = userSessionService;
             _context = context;
             _encryptionService = encryptionService;
+            _notificationService = notificationService;
         }
 
         [HttpGet]
@@ -93,7 +96,7 @@ namespace task_management_system.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> AddComment([FromBody] AddCommentRequest request)
+        public async Task<IActionResult> AddComment([FromForm] string taskId, [FromForm] string comment, IFormFile? file)
         {
             try
             {
@@ -104,41 +107,64 @@ namespace task_management_system.Controllers
 
                 var userId = _userSessionService.GetCurrentUserId();
                 var userName = _userSessionService.GetCurrentUserName();
-                var profilePicture = _userSessionService.GetCurrentUserProfilePicture();
 
-                if (string.IsNullOrEmpty(request.Comment) || string.IsNullOrEmpty(request.TaskId))
+                if ((string.IsNullOrEmpty(comment) && file == null) || string.IsNullOrEmpty(taskId))
                 {
-                    return Json(new { success = false, message = "Comment and task ID are required" });
+                    return Json(new { success = false, message = "Comment text or file is required" });
                 }
 
                 // Encrypt the comment text before storing
-                var encryptedText = _encryptionService.Encrypt(request.Comment);
+                var encryptedText = !string.IsNullOrEmpty(comment) ? _encryptionService.Encrypt(comment) : string.Empty;
 
-                var comment = new Comment
+                var commentEntity = new Comment
                 {
-                    TaskId = request.TaskId,
+                    TaskId = taskId,
                     UserId = userId ?? string.Empty,
                     UserName = userName ?? "Unknown User",
-                    ProfilePicture = profilePicture,
-                    Text = encryptedText,
+                    CommentText = encryptedText,
                     CreatedAt = DateTime.UtcNow
                 };
 
-                await _context.Comments.InsertOneAsync(comment);
+                // Handle file upload
+                if (file != null && file.Length > 0)
+                {
+                    var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads", "comments");
+                    Directory.CreateDirectory(uploadsFolder);
+
+                    var uniqueFileName = $"{Guid.NewGuid()}_{file.FileName}";
+                    var filePath = Path.Combine(uploadsFolder, uniqueFileName);
+
+                    using (var stream = new FileStream(filePath, FileMode.Create))
+                    {
+                        await file.CopyToAsync(stream);
+                    }
+
+                    commentEntity.FileName = file.FileName;
+                    commentEntity.FileUrl = $"/uploads/comments/{uniqueFileName}";
+                    commentEntity.FileType = file.ContentType;
+                    commentEntity.FileSize = file.Length;
+                }
+
+                await _context.Comments.InsertOneAsync(commentEntity);
 
                 // Decrypt for response
-                var decryptedText = _encryptionService.Decrypt(comment.Text);
+                var decryptedText = !string.IsNullOrEmpty(commentEntity.CommentText) 
+                    ? _encryptionService.Decrypt(commentEntity.CommentText) 
+                    : string.Empty;
 
                 return Json(new { 
                     success = true, 
                     message = "Comment added successfully!",
                     comment = new {
-                        id = comment.Id,
-                        userName = comment.UserName,
-                        profilePicture = comment.ProfilePicture,
+                        id = commentEntity.CommentId,
+                        userName = commentEntity.UserName,
+                        profilePicture = "",
                         text = decryptedText,
-                        createdAt = comment.CreatedAt,
-                        timeAgo = GetTimeAgo(comment.CreatedAt)
+                        fileName = commentEntity.FileName,
+                        fileUrl = commentEntity.FileUrl,
+                        fileType = commentEntity.FileType,
+                        createdAt = commentEntity.CreatedAt,
+                        timeAgo = GetTimeAgo(commentEntity.CreatedAt)
                     }
                 });
             }
@@ -168,37 +194,37 @@ namespace task_management_system.Controllers
                     .SortByDescending(c => c.CreatedAt)
                     .ToListAsync();
 
-                // Fetch profile pictures for comments that don't have them
-                foreach (var comment in comments)
-                {
-                    if (string.IsNullOrEmpty(comment.ProfilePicture) && !string.IsNullOrEmpty(comment.UserId))
-                    {
-                        var user = await _context.Users
-                            .Find(u => u.Id == comment.UserId)
-                            .FirstOrDefaultAsync();
-
-                        if (user != null && !string.IsNullOrEmpty(user.ProfilePicture))
+                // Fetch profile pictures from users for comments
+                var userIds = comments.Select(c => c.UserId).Distinct().ToList();
+                var users = await _context.Users
+                    .Find(u => userIds.Contains(u.UserId))
+                    .ToListAsync();
+                
+                var userProfilePictures = users.ToDictionary(
+                    u => u.UserId,
+                    u => {
+                        if (!string.IsNullOrEmpty(u.ProfilePictureUrl))
                         {
-                            // Format as data URL if not already formatted
-                            if (!user.ProfilePicture.StartsWith("data:"))
+                            if (!u.ProfilePictureUrl.StartsWith("data:"))
                             {
-                                var contentType = user.ProfilePictureContentType ?? "image/jpeg";
-                                comment.ProfilePicture = $"data:{contentType};base64,{user.ProfilePicture}";
+                                var contentType = u.ProfilePictureContentType ?? "image/jpeg";
+                                return $"data:{contentType};base64,{u.ProfilePictureUrl}";
                             }
-                            else
-                            {
-                                comment.ProfilePicture = user.ProfilePicture;
-                            }
+                            return u.ProfilePictureUrl;
                         }
+                        return "";
                     }
-                }
+                );
 
                 // Decrypt comment text before sending to client
                 var commentsData = comments.Select(c => new {
-                    id = c.Id,
+                    id = c.CommentId,
                     userName = c.UserName,
-                    profilePicture = c.ProfilePicture,
-                    text = _encryptionService.Decrypt(c.Text),
+                    profilePicture = userProfilePictures.ContainsKey(c.UserId) ? userProfilePictures[c.UserId] : "",
+                    text = !string.IsNullOrEmpty(c.CommentText) ? _encryptionService.Decrypt(c.CommentText) : string.Empty,
+                    fileName = c.FileName,
+                    fileUrl = c.FileUrl,
+                    fileType = c.FileType,
                     createdAt = c.CreatedAt,
                     timeAgo = GetTimeAgo(c.CreatedAt)
                 }).ToList();
@@ -270,12 +296,12 @@ namespace task_management_system.Controllers
                 await _context.WorkLogs.InsertOneAsync(workLog);
 
                 // Automatically set task status to InProgress when work is submitted
-                var task = await _context.Tasks.Find(t => t.Id == taskId).FirstOrDefaultAsync();
-                if (task != null && task.Status != task_management_system.Models.TaskStatus.Completed)
+                var task = await _context.Tasks.Find(t => t.TaskId == taskId).FirstOrDefaultAsync();
+                if (task != null && task.TaskStatus != task_management_system.Models.TaskStatus.Completed)
                 {
-                    var taskFilter = Builders<AddTask>.Filter.Eq(t => t.Id, taskId);
+                    var taskFilter = Builders<AddTask>.Filter.Eq(t => t.TaskId, taskId);
                     var taskUpdate = Builders<AddTask>.Update
-                        .Set(t => t.Status, task_management_system.Models.TaskStatus.InProgress)
+                        .Set(t => t.TaskStatus, task_management_system.Models.TaskStatus.InProgress)
                         .Set(t => t.UpdatedAt, DateTime.UtcNow);
                     
                     await _context.Tasks.UpdateOneAsync(taskFilter, taskUpdate);
@@ -285,7 +311,7 @@ namespace task_management_system.Controllers
                     success = true, 
                     message = "Work submitted successfully! Task status updated to In Progress.",
                     workLog = new {
-                        id = workLog.Id,
+                        id = workLog.WorkLogId,
                         userName = workLog.UserName,
                         description = workLog.Description,
                         fileName = workLog.FileName,
@@ -325,7 +351,7 @@ namespace task_management_system.Controllers
                     .ToListAsync();
 
                 var workLogsData = workLogs.Select(w => new {
-                    id = w.Id,
+                    id = w.WorkLogId,
                     userId = w.UserId,
                     userName = w.UserName,
                     description = w.Description,
@@ -382,7 +408,7 @@ namespace task_management_system.Controllers
                 if (!string.IsNullOrWhiteSpace(model.Project))
                 {
                     var userProjects = await _projectService.GetUserProjectsAsync(userId);
-                    var projectExists = userProjects.Any(p => p.Name.Equals(model.Project, StringComparison.OrdinalIgnoreCase));
+                    var projectExists = userProjects.Any(p => p.ProjectName.Equals(model.Project, StringComparison.OrdinalIgnoreCase));
                     
                     if (!projectExists)
                     {
@@ -401,19 +427,34 @@ namespace task_management_system.Controllers
                 // Create the task
                 var task = await _taskService.CreateTaskAsync(model, userId);
 
+                // Send notification if task is assigned to someone
+                if (!string.IsNullOrEmpty(model.AssignedTo))
+                {
+                    var currentUser = await _context.Users.Find(u => u.UserId == userId).FirstOrDefaultAsync();
+                    var assigner = currentUser != null ? $"{currentUser.FirstName} {currentUser.LastName}" : "Someone";
+                    
+                    await _notificationService.CreateNotificationAsync(
+                        userId: model.AssignedTo,
+                        title: "New Task Assigned",
+                        message: $"{assigner} assigned you a new task: \"{task.TaskTitle}\"",
+                        type: NotificationType.TaskAssigned,
+                        link: $"/Task/Dashboard/{task.TaskId}"
+                    );
+                }
+
                 return Json(new
                 {
                     success = true,
                     message = "Task created successfully!",
                     task = new
                     {
-                        id = task.Id,
-                        title = task.Title,
+                        id = task.TaskId,
+                        title = task.TaskTitle,
                         description = task.Description,
-                        project = task.Project,
+                        project = task.ProjectId,
                         dueDate = task.DueDate?.ToString("MMM dd, yyyy"),
                         priority = task.Priority.ToString(),
-                        status = task.Status.ToString(),
+                        status = task.TaskStatus.ToString(),
                         isCompleted = task.IsCompleted
                     }
                 });
@@ -452,15 +493,15 @@ namespace task_management_system.Controllers
                     success = true,
                     task = new
                     {
-                        id = task.Id,
-                        title = task.Title,
+                        id = task.TaskId,
+                        title = task.TaskTitle,
                         description = task.Description,
-                        project = task.Project,
-                        assignedTo = task.AssignedTo,
-                        assignedToName = task.AssignedToName,
+                        project = task.ProjectId,
+                        assignedTo = task.AssignedToUserId,
+                        assignedToName = task.AssignedUserName,
                         dueDate = task.DueDate?.ToString("yyyy-MM-dd"),
                         priority = task.Priority.ToString(),
-                        status = task.Status.ToString(),
+                        status = task.TaskStatus.ToString(),
                         isCompleted = task.IsCompleted
                     }
                 });
@@ -497,7 +538,7 @@ namespace task_management_system.Controllers
                 if (!string.IsNullOrWhiteSpace(request.Project))
                 {
                     var userProjects = await _projectService.GetUserProjectsAsync(userId);
-                    var projectExists = userProjects.Any(p => p.Name.Equals(request.Project, StringComparison.OrdinalIgnoreCase));
+                    var projectExists = userProjects.Any(p => p.ProjectName.Equals(request.Project, StringComparison.OrdinalIgnoreCase));
                     
                     if (!projectExists)
                     {
@@ -522,6 +563,10 @@ namespace task_management_system.Controllers
                     Priority = request.Priority
                 };
 
+                // Get the task before update to check if assignment changed
+                var existingTask = await _taskService.GetTaskByIdAsync(request.TaskId, userId);
+                var previousAssignee = existingTask?.AssignedToUserId;
+
                 var success = await _taskService.UpdateTaskAsync(request.TaskId, model, userId);
                 
                 if (success)
@@ -531,6 +576,21 @@ namespace task_management_system.Controllers
                     {
                         return Json(new { success = false, message = "Task not found after update" });
                     }
+
+                    // Send notification if task was assigned to someone new
+                    if (!string.IsNullOrEmpty(request.AssignedTo) && request.AssignedTo != previousAssignee)
+                    {
+                        var currentUser = await _context.Users.Find(u => u.UserId == userId).FirstOrDefaultAsync();
+                        var assigner = currentUser != null ? $"{currentUser.FirstName} {currentUser.LastName}" : "Someone";
+                        
+                        await _notificationService.CreateNotificationAsync(
+                            userId: request.AssignedTo,
+                            title: "New Task Assigned",
+                            message: $"{assigner} assigned you a task: \"{task.TaskTitle}\"",
+                            type: NotificationType.TaskAssigned,
+                            link: $"/Task/Dashboard/{task.TaskId}"
+                        );
+                    }
                     
                     return Json(new
                     {
@@ -538,13 +598,13 @@ namespace task_management_system.Controllers
                         message = "Task updated successfully!",
                         task = new
                         {
-                            id = task.Id,
-                            title = task.Title,
+                            id = task.TaskId,
+                            title = task.TaskTitle,
                             description = task.Description,
-                            project = task.Project,
+                            project = task.ProjectId,
                             dueDate = task.DueDate?.ToString("MMM dd, yyyy"),
                             priority = task.Priority.ToString(),
-                            status = task.Status.ToString(),
+                            status = task.TaskStatus.ToString(),
                             isCompleted = task.IsCompleted
                         }
                     });
@@ -577,7 +637,7 @@ namespace task_management_system.Controllers
                 }
 
                 // Get current task state before updating
-                var task = await _context.Tasks.Find(t => t.Id == request.TaskId).FirstOrDefaultAsync();
+                var task = await _context.Tasks.Find(t => t.TaskId == request.TaskId).FirstOrDefaultAsync();
                 if (task == null)
                 {
                     return Json(new { success = false, message = "Task not found" });
@@ -675,6 +735,63 @@ namespace task_management_system.Controllers
             public string? AssignedTo { get; set; }
             public DateTime? DueDate { get; set; }
             public Models.TaskPriority Priority { get; set; }
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> UpdateStatus([FromBody] UpdateTaskStatusRequest request)
+        {
+            try
+            {
+                if (!_userSessionService.IsUserLoggedIn())
+                {
+                    return Json(new { success = false, message = "User not authenticated" });
+                }
+
+                var userId = _userSessionService.GetCurrentUserId();
+                if (string.IsNullOrEmpty(userId))
+                {
+                    return Json(new { success = false, message = "User not authenticated" });
+                }
+
+                // Get the status label
+                var statusLabel = await _context.TaskStatusLabels
+                    .Find(s => s.StatusLabelId == request.StatusLabelId)
+                    .FirstOrDefaultAsync();
+
+                if (statusLabel == null)
+                {
+                    return Json(new { success = false, message = "Status label not found" });
+                }
+
+                // Update the task
+                var update = Builders<AddTask>.Update
+                    .Set(t => t.StatusLabelId, statusLabel.StatusLabelId)
+                    .Set(t => t.StatusLabelName, statusLabel.LabelName)
+                    .Set(t => t.StatusLabelColor, statusLabel.LabelColor)
+                    .Set(t => t.UpdatedAt, DateTime.UtcNow);
+
+                var result = await _context.Tasks.UpdateOneAsync(
+                    t => t.TaskId == request.TaskId && t.UserId == userId,
+                    update
+                );
+
+                if (result.ModifiedCount == 0)
+                {
+                    return Json(new { success = false, message = "Task not found or you don't have permission to update it" });
+                }
+
+                return Json(new { success = true, message = "Task status updated successfully" });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = $"Error: {ex.Message}" });
+            }
+        }
+
+        public class UpdateTaskStatusRequest
+        {
+            public string TaskId { get; set; } = string.Empty;
+            public string StatusLabelId { get; set; } = string.Empty;
         }
 
         public class AddCommentRequest

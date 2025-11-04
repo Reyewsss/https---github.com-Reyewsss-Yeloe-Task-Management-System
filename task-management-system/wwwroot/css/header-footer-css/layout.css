@@ -42,7 +42,7 @@
 
 .nav-link {
     font-size: 15px;
-    font-weight: 700;
+    font-weight: 600;
     color: var(--yoloe-brown);
     margin: 0 20px;
     transition: all 0.3s ease;
@@ -70,14 +70,32 @@
         }
 
     .nav-link.active {
-        color: var(--yoloe-dark);
-        font-weight: 700;
+    color: var(--yoloe-dark);
+    font-weight: 700;
     }
 
-        .nav-link.active::after {
-            width: 100%;
-            background-color: var(--yoloe-dark); 
-        }
+    .nav-link.active::after {
+        width: 100%;
+    }
+
+    .nav-link:focus-visible {
+        outline: 2px solid var(--yoloe-yellow);
+        outline-offset: 2px;
+        border-radius: 2px;
+    }
+
+    .nav-link:focus:not(:focus-visible) {
+        outline: none;
+    }
+
+    .nav-link:focus {
+        outline: none;
+        color: var(--yoloe-dark);
+    }
+
+    .nav-link:focus::after {
+        width: 100%;
+    }
 
 .btn {
     padding: 12px 28px;

@@ -46,8 +46,8 @@ namespace task_management_system.Controllers
             ViewBag.CompletedTasks = allUserTasks.Count(t => t.IsCompleted);
             ViewBag.PendingTasks = allUserTasks.Count(t => !t.IsCompleted);
             ViewBag.TotalProjects = allUserProjects.Count;
-            ViewBag.CompletedProjects = allUserProjects.Count(p => p.Status == ProjectStatus.Completed);
-            ViewBag.ActiveProjects = allUserProjects.Count(p => p.Status == ProjectStatus.Active);
+            ViewBag.CompletedProjects = allUserProjects.Count(p => p.ProjectStatus == ProjectStatus.Completed);
+            ViewBag.ActiveProjects = allUserProjects.Count(p => p.ProjectStatus == ProjectStatus.Active);
 
             // Pass recent items to view
             ViewBag.RecentTasks = recentTasks;
@@ -65,9 +65,9 @@ namespace task_management_system.Controllers
                 {
                     Type = "TaskCompleted",
                     Icon = "fa-check",
-                    Text = $"Task \"{t.Title}\" completed",
+                    Text = $"Task \"{t.TaskTitle}\" completed",
                     Time = t.UpdatedAt,
-                    TaskId = t.Id
+                    TaskId = t.TaskId
                 });
             
             // Add recently created tasks
@@ -78,9 +78,9 @@ namespace task_management_system.Controllers
                 {
                     Type = "TaskCreated",
                     Icon = "fa-plus",
-                    Text = $"Task \"{t.Title}\" created",
+                    Text = $"Task \"{t.TaskTitle}\" created",
                     Time = t.CreatedAt,
-                    TaskId = t.Id
+                    TaskId = t.TaskId
                 });
             
             // Add recently created projects
@@ -91,9 +91,9 @@ namespace task_management_system.Controllers
                 {
                     Type = "ProjectCreated",
                     Icon = "fa-folder-plus",
-                    Text = $"Project \"{p.Name}\" created",
+                    Text = $"Project \"{p.ProjectName}\" created",
                     Time = p.CreatedAt,
-                    ProjectId = p.Id
+                    ProjectId = p.ProjectId
                 });
             
             // Combine and sort all activities
@@ -151,19 +151,19 @@ namespace task_management_system.Controllers
                 var allTasks = await _taskService.GetUserTasksAsync(userId);
                 var matchedTasks = allTasks
                     .Where(t => 
-                        t.Title.Contains(query, StringComparison.OrdinalIgnoreCase) ||
+                        t.TaskTitle.Contains(query, StringComparison.OrdinalIgnoreCase) ||
                         (t.Description != null && t.Description.Contains(query, StringComparison.OrdinalIgnoreCase)))
                     .Take(5)
                     .Select(t => new
                     {
-                        id = t.Id,
-                        title = t.Title,
+                        id = t.TaskId,
+                        title = t.TaskTitle,
                         description = t.Description,
-                        status = t.Status.ToString(),
+                        status = t.TaskStatus.ToString(),
                         priority = t.Priority.ToString(),
                         dueDate = t.DueDate?.ToString("MMM dd, yyyy"),
                         isCompleted = t.IsCompleted,
-                        url = Url.Action("Dashboard", "Task", new { id = t.Id })
+                        url = Url.Action("Dashboard", "Task", new { id = t.TaskId })
                     })
                     .ToList();
 
@@ -171,17 +171,17 @@ namespace task_management_system.Controllers
                 var allProjects = await _projectService.GetUserProjectsAsync(userId);
                 var matchedProjects = allProjects
                     .Where(p => 
-                        p.Name.Contains(query, StringComparison.OrdinalIgnoreCase) ||
+                        p.ProjectName.Contains(query, StringComparison.OrdinalIgnoreCase) ||
                         (p.Description != null && p.Description.Contains(query, StringComparison.OrdinalIgnoreCase)))
                     .Take(5)
                     .Select(p => new
                     {
-                        id = p.Id,
-                        name = p.Name,
+                        id = p.ProjectId,
+                        name = p.ProjectName,
                         description = p.Description,
-                        status = p.Status.ToString(),
+                        status = p.ProjectStatus.ToString(),
                         priority = p.Priority.ToString(),
-                        url = Url.Action("Dashboard", "Projects", new { id = p.Id })
+                        url = Url.Action("Dashboard", "Projects", new { id = p.ProjectId })
                     })
                     .ToList();
 

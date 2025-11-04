@@ -32,7 +32,7 @@ namespace task_management_system.Services
             if (!string.IsNullOrEmpty(model.AssignedTo))
             {
                 var assignedUser = await _context.Users
-                    .Find(u => u.Id == model.AssignedTo)
+                    .Find(u => u.UserId == model.AssignedTo)
                     .FirstOrDefaultAsync();
                 
                 if (assignedUser != null)
@@ -44,14 +44,14 @@ namespace task_management_system.Services
             var task = new AddTask
             {
                 UserId = userId,
-                Title = model.Title,
+                TaskTitle = model.Title,
                 Description = model.Description,
-                Project = model.Project,
-                AssignedTo = model.AssignedTo,
-                AssignedToName = assignedToName,
+                ProjectId = model.Project, // Store project name
+                AssignedToUserId = model.AssignedTo,
+                AssignedUserName = assignedToName,
                 DueDate = model.DueDate,
                 Priority = model.Priority,
-                Status = TaskStatus.Pending,
+                TaskStatus = TaskStatus.Pending,
                 IsCompleted = false,
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow
@@ -80,9 +80,9 @@ namespace task_management_system.Services
             if (memberProjectIds.Any())
             {
                 var projects = await _context.Projects
-                    .Find(p => memberProjectIds.Contains(p.Id!))
+                    .Find(p => memberProjectIds.Contains(p.ProjectId!))
                     .ToListAsync();
-                memberProjectNames = projects.Select(p => p.Name).ToList();
+                memberProjectNames = projects.Select(p => p.ProjectName).ToList();
             }
 
             // Get tasks assigned to the user from projects where they are a member
@@ -91,13 +91,13 @@ namespace task_management_system.Services
             if (memberProjectNames.Any())
             {
                 assignedTasks = await _context.Tasks
-                    .Find(t => memberProjectNames.Contains(t.Project!) && t.AssignedTo == userId)
+                    .Find(t => memberProjectNames.Contains(t.ProjectId!) && t.AssignedToUserId == userId)
                     .ToListAsync();
             }
 
             // Combine owned tasks and assigned tasks, remove duplicates
             var allTasks = ownedTasks.Concat(assignedTasks)
-                .GroupBy(t => t.Id)
+                .GroupBy(t => t.TaskId)
                 .Select(g => g.First())
                 .OrderByDescending(t => t.CreatedAt)
                 .ToList();
@@ -109,31 +109,31 @@ namespace task_management_system.Services
         {
             // First check if user owns the task
             var task = await _context.Tasks
-                .Find(t => t.Id == taskId && t.UserId == userId)
+                .Find(t => t.TaskId == taskId && t.UserId == userId)
                 .FirstOrDefaultAsync();
 
             // If not owner, check if task is assigned to the user and belongs to a project where user is a member
             if (task == null)
             {
                 task = await _context.Tasks
-                    .Find(t => t.Id == taskId)
+                    .Find(t => t.TaskId == taskId)
                     .FirstOrDefaultAsync();
 
-                if (task != null && !string.IsNullOrEmpty(task.Project))
+                if (task != null && !string.IsNullOrEmpty(task.ProjectId))
                 {
                     // Check if the project exists and user is a member
                     var project = await _context.Projects
-                        .Find(p => p.Name == task.Project)
+                        .Find(p => p.ProjectName == task.ProjectId)
                         .FirstOrDefaultAsync();
 
                     if (project != null)
                     {
                         var isMember = await _context.ProjectMembers
-                            .Find(m => m.ProjectId == project.Id && m.UserId == userId)
+                            .Find(m => m.ProjectId == project.ProjectId && m.UserId == userId)
                             .FirstOrDefaultAsync();
 
                         // User must be a member AND task must be assigned to them
-                        if (isMember == null || task.AssignedTo != userId)
+                        if (isMember == null || task.AssignedToUserId != userId)
                         {
                             // User is not a member or task is not assigned to them
                             task = null;
@@ -159,7 +159,7 @@ namespace task_management_system.Services
         {
             // Allow completion if user owns the task OR if task is assigned to them
             var task = await _context.Tasks
-                .Find(t => t.Id == taskId)
+                .Find(t => t.TaskId == taskId)
                 .FirstOrDefaultAsync();
 
             if (task == null)
@@ -168,12 +168,12 @@ namespace task_management_system.Services
             }
 
             // Check if user owns the task or if it's assigned to them
-            if (task.UserId != userId && task.AssignedTo != userId)
+            if (task.UserId != userId && task.AssignedToUserId != userId)
             {
                 return false;
             }
 
-            var filter = Builders<AddTask>.Filter.Eq(t => t.Id, taskId);
+            var filter = Builders<AddTask>.Filter.Eq(t => t.TaskId, taskId);
 
             UpdateDefinition<AddTask> update;
 
@@ -183,7 +183,7 @@ namespace task_management_system.Services
                 // Unchecking - return to Pending status
                 update = Builders<AddTask>.Update
                     .Set(t => t.IsCompleted, false)
-                    .Set(t => t.Status, TaskStatus.Pending)
+                    .Set(t => t.TaskStatus, TaskStatus.Pending)
                     .Set(t => t.UpdatedAt, DateTime.UtcNow);
             }
             else
@@ -191,7 +191,7 @@ namespace task_management_system.Services
                 // Checking - mark as Completed
                 update = Builders<AddTask>.Update
                     .Set(t => t.IsCompleted, true)
-                    .Set(t => t.Status, TaskStatus.Completed)
+                    .Set(t => t.TaskStatus, TaskStatus.Completed)
                     .Set(t => t.UpdatedAt, DateTime.UtcNow);
             }
 
@@ -202,7 +202,7 @@ namespace task_management_system.Services
         public async Task<bool> DeleteTaskAsync(string taskId, string userId)
         {
             var filter = Builders<AddTask>.Filter.And(
-                Builders<AddTask>.Filter.Eq(t => t.Id, taskId),
+                Builders<AddTask>.Filter.Eq(t => t.TaskId, taskId),
                 Builders<AddTask>.Filter.Eq(t => t.UserId, userId)
             );
 
@@ -213,7 +213,7 @@ namespace task_management_system.Services
         public async Task<bool> UpdateTaskAsync(string taskId, CreateTaskViewModel model, string userId)
         {
             var filter = Builders<AddTask>.Filter.And(
-                Builders<AddTask>.Filter.Eq(t => t.Id, taskId),
+                Builders<AddTask>.Filter.Eq(t => t.TaskId, taskId),
                 Builders<AddTask>.Filter.Eq(t => t.UserId, userId)
             );
 
@@ -222,7 +222,7 @@ namespace task_management_system.Services
             if (!string.IsNullOrEmpty(model.AssignedTo))
             {
                 var assignedUser = await _context.Users
-                    .Find(u => u.Id == model.AssignedTo)
+                    .Find(u => u.UserId == model.AssignedTo)
                     .FirstOrDefaultAsync();
                 
                 if (assignedUser != null)
@@ -232,11 +232,11 @@ namespace task_management_system.Services
             }
 
             var update = Builders<AddTask>.Update
-                .Set(t => t.Title, model.Title)
+                .Set(t => t.TaskTitle, model.Title)
                 .Set(t => t.Description, model.Description)
-                .Set(t => t.Project, model.Project)
-                .Set(t => t.AssignedTo, model.AssignedTo)
-                .Set(t => t.AssignedToName, assignedToName)
+                .Set(t => t.ProjectId, model.Project) // Store project name
+                .Set(t => t.AssignedToUserId, model.AssignedTo)
+                .Set(t => t.AssignedUserName, assignedToName)
                 .Set(t => t.DueDate, model.DueDate)
                 .Set(t => t.Priority, model.Priority)
                 .Set(t => t.UpdatedAt, DateTime.UtcNow);

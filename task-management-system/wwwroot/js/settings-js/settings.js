@@ -1,127 +1,119 @@
 // Settings Page Functionality
-
-$(document).ready(function() {
+document.addEventListener('DOMContentLoaded', function() {
     initializeSettings();
 });
 
 function initializeSettings() {
-    // Load saved preferences
-    loadPreferences();
+    // Set up change listeners for all toggles
+    setupToggleListeners();
+}
 
+function setupToggleListeners() {
     // Dark Mode Toggle
-    $('#darkMode').on('change', function() {
-        const isDarkMode = $(this).is(':checked');
-        // Use the global toggleDarkMode function if available
-        if (typeof window.toggleDarkMode === 'function') {
-            window.toggleDarkMode(isDarkMode);
-        } else {
-            setDarkMode(isDarkMode);
-        }
-        savePreference('darkMode', isDarkMode);
-        showSettingsAlert('Dark mode ' + (isDarkMode ? 'enabled' : 'disabled'), 'success');
-    });
+    const darkModeToggle = document.getElementById('darkMode');
+    if (darkModeToggle) {
+        darkModeToggle.addEventListener('change', async function() {
+            const isDarkMode = this.checked;
+            await savePreferences();
+            applyDarkMode(isDarkMode);
+            showSettingsNotification('Dark mode ' + (isDarkMode ? 'enabled' : 'disabled'), 'success');
+        });
+    }
 
     // Email Notifications Toggle
-    $('#emailNotifications').on('change', function() {
-        const isEnabled = $(this).is(':checked');
-        savePreference('emailNotifications', isEnabled);
-        showSettingsAlert('Email notifications ' + (isEnabled ? 'enabled' : 'disabled'), 'success');
-    });
+    const emailNotificationsToggle = document.getElementById('emailNotifications');
+    if (emailNotificationsToggle) {
+        emailNotificationsToggle.addEventListener('change', async function() {
+            const isEnabled = this.checked;
+            await savePreferences();
+            showSettingsNotification('Email notifications ' + (isEnabled ? 'enabled' : 'disabled'), 'success');
+        });
+    }
 
     // Task Reminders Toggle
-    $('#taskReminders').on('change', function() {
-        const isEnabled = $(this).is(':checked');
-        savePreference('taskReminders', isEnabled);
-        showSettingsAlert('Task reminders ' + (isEnabled ? 'enabled' : 'disabled'), 'success');
-    });
+    const taskRemindersToggle = document.getElementById('taskReminders');
+    if (taskRemindersToggle) {
+        taskRemindersToggle.addEventListener('change', async function() {
+            const isEnabled = this.checked;
+            await savePreferences();
+            showSettingsNotification('Task reminders ' + (isEnabled ? 'enabled' : 'disabled'), 'success');
+        });
+    }
 
     // Weekly Summary Toggle
-    $('#weeklySummary').on('change', function() {
-        const isEnabled = $(this).is(':checked');
-        savePreference('weeklySummary', isEnabled);
-        showSettingsAlert('Weekly summary ' + (isEnabled ? 'enabled' : 'disabled'), 'success');
-    });
-}
-
-// Load saved preferences from localStorage
-function loadPreferences() {
-    // Dark Mode
-    const darkMode = localStorage.getItem('darkMode');
-    if (darkMode !== null) {
-        const isDarkMode = darkMode === 'true';
-        $('#darkMode').prop('checked', isDarkMode);
-        setDarkMode(isDarkMode);
-    } else {
-        // Default to unchecked
-        $('#darkMode').prop('checked', false);
-    }
-
-    // Email Notifications
-    const emailNotifications = localStorage.getItem('emailNotifications');
-    if (emailNotifications !== null) {
-        $('#emailNotifications').prop('checked', emailNotifications === 'true');
-    } else {
-        $('#emailNotifications').prop('checked', true); // Default checked
-    }
-
-    // Task Reminders
-    const taskReminders = localStorage.getItem('taskReminders');
-    if (taskReminders !== null) {
-        $('#taskReminders').prop('checked', taskReminders === 'true');
-    } else {
-        $('#taskReminders').prop('checked', true); // Default checked
-    }
-
-    // Weekly Summary
-    const weeklySummary = localStorage.getItem('weeklySummary');
-    if (weeklySummary !== null) {
-        $('#weeklySummary').prop('checked', weeklySummary === 'true');
-    } else {
-        $('#weeklySummary').prop('checked', false); // Default unchecked
+    const weeklySummaryToggle = document.getElementById('weeklySummary');
+    if (weeklySummaryToggle) {
+        weeklySummaryToggle.addEventListener('change', async function() {
+            const isEnabled = this.checked;
+            await savePreferences();
+            showSettingsNotification('Weekly summary ' + (isEnabled ? 'enabled' : 'disabled'), 'success');
+        });
     }
 }
 
-// Save preference to localStorage
-function savePreference(key, value) {
-    localStorage.setItem(key, value);
+async function savePreferences() {
+    try {
+        const preferences = {
+            emailNotifications: document.getElementById('emailNotifications')?.checked || false,
+            taskReminders: document.getElementById('taskReminders')?.checked || false,
+            weeklySummary: document.getElementById('weeklySummary')?.checked || false,
+            darkMode: document.getElementById('darkMode')?.checked || false
+        };
+
+        const response = await fetch('/Account/UpdatePreferences', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(preferences)
+        });
+
+        const data = await response.json();
+        
+        if (!data.success) {
+            console.error('Failed to save preferences:', data.message);
+            showSettingsNotification('Failed to save preferences', 'error');
+        }
+    } catch (error) {
+        console.error('Error saving preferences:', error);
+        showSettingsNotification('Error saving preferences', 'error');
+    }
 }
 
-// Set dark mode
-function setDarkMode(enabled) {
-    if (enabled) {
-        document.documentElement.setAttribute('data-theme', 'dark');
+function applyDarkMode(isDarkMode) {
+    if (isDarkMode) {
         document.body.classList.add('dark-mode');
         localStorage.setItem('darkMode', 'true');
     } else {
-        document.documentElement.setAttribute('data-theme', 'light');
         document.body.classList.remove('dark-mode');
         localStorage.setItem('darkMode', 'false');
     }
 }
 
-// Show settings alert
-function showSettingsAlert(message, type) {
-    // Remove existing alerts
-    $('.settings-alert').remove();
-
-    const alertClass = type === 'success' ? 'alert-success' : type === 'error' ? 'alert-danger' : 'alert-info';
-    const iconClass = type === 'success' ? 'fa-check-circle' : type === 'error' ? 'fa-exclamation-circle' : 'fa-info-circle';
-
-    const alert = $(`
-        <div class="settings-alert alert ${alertClass} alert-dismissible fade show position-fixed" role="alert" style="bottom: 20px; right: 20px; z-index: 9999; min-width: 300px;">
-            <i class="fas ${iconClass}"></i>
-            ${message}
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+function showSettingsNotification(message, type) {
+    // Create notification element
+    const notification = document.createElement('div');
+    notification.className = `settings-notification ${type}`;
+    notification.innerHTML = `
+        <div class="notification-content">
+            <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'}"></i>
+            <span>${message}</span>
         </div>
-    `);
-
-    // Append to body instead of prepending to card
-    $('body').append(alert);
-
-    // Auto-dismiss after 3 seconds
+    `;
+    
+    // Add to page
+    document.body.appendChild(notification);
+    
+    // Trigger animation
     setTimeout(() => {
-        alert.fadeOut(300, function() {
-            $(this).remove();
-        });
+        notification.classList.add('show');
+    }, 10);
+    
+    // Remove after 3 seconds
+    setTimeout(() => {
+        notification.classList.remove('show');
+        setTimeout(() => {
+            notification.remove();
+        }, 300);
     }, 3000);
 }

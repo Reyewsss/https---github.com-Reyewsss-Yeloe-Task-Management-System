@@ -512,8 +512,7 @@ body.dashboard-body {
 }
 
 .header-btn:hover {
-    background: var(--primary-color);
-    color: var(--text-light);
+     background: #dddddd;
 }
 
 .notification-btn {
@@ -550,6 +549,11 @@ body.dashboard-body {
     cursor: pointer;
     padding: 0.4rem 0.75rem;
     transition: var(--transition);
+}
+
+.user-menu-btn:hover {
+     background: #dddddd;
+     border-radius: 8px;
 }
 
 .user-avatar-small {
@@ -857,22 +861,30 @@ body.dashboard-body {
     position: relative;
 }
 
+.quick-actions-btn .fa-plus {
+    color: black; 
+    font-size: 0.9rem; 
+    background: none;
+}
+
 .quick-actions-btn {
-    width: 40px;
-    height: 40px;
+    width: 36px;
+    height: 36px;
     border-radius: 8px;
     background: transparent;
-    color: black;
     border: none;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
+    top: 0.1rem;
+    right: 0.1rem;
     font-size: 1rem;
+    padding: 0.1rem 0.25rem;
 }
 
 .quick-actions-btn:hover {
-    background: var(--primary-dark);
+    background: #dddddd;
 }
 
 .quick-actions-dropdown {

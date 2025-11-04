@@ -32,6 +32,17 @@
     </div>
 }
 
+@if (!ViewData.ModelState.IsValid && ViewData.ModelState.ContainsKey("") && ViewData.ModelState[""]!.Errors.Count > 0)
+{
+    <div class="alert alert-danger">
+        <i class="fas fa-exclamation-circle me-2"></i>
+        @foreach (var error in ViewData.ModelState[""]!.Errors)
+        {
+            <span>@error.ErrorMessage</span>
+        }
+    </div>
+}
+
 <form asp-action="VerifyEmail" method="post" class="auth-form">
     <input type="hidden" asp-for="Email" />
 

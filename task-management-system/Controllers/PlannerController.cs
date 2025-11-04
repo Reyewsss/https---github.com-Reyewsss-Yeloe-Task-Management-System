@@ -74,8 +74,8 @@ namespace task_management_system.Controllers
                     {
                         events.Add(new
                         {
-                            id = task.Id,
-                            title = task.Title,
+                            id = task.TaskId,
+                            title = task.TaskTitle,
                             start = task.DueDate.Value.ToString("yyyy-MM-dd"),
                             backgroundColor = task.Priority == Models.TaskPriority.High ? "#F44336" :
                                             task.Priority == Models.TaskPriority.Medium ? "#FF9800" : "#4CAF50",
@@ -83,8 +83,8 @@ namespace task_management_system.Controllers
                                         task.Priority == Models.TaskPriority.Medium ? "#FF9800" : "#4CAF50",
                             type = "task",
                             description = task.Description,
-                            project = task.Project,
-                            status = task.Status.ToString(),
+                            project = task.ProjectId,
+                            status = task.TaskStatus.ToString(),
                             isCompleted = task.IsCompleted
                         });
                     }
@@ -96,15 +96,15 @@ namespace task_management_system.Controllers
                     {
                         events.Add(new
                         {
-                            id = project.Id,
-                            title = $"📁 {project.Name}",
+                            id = project.ProjectId,
+                            title = $"📁 {project.ProjectName}",
                             start = project.StartDate?.ToString("yyyy-MM-dd") ?? project.DueDate.Value.ToString("yyyy-MM-dd"),
                             end = project.DueDate.Value.ToString("yyyy-MM-dd"),
                             backgroundColor = "#6A4018",
                             borderColor = "#4A2D10",
                             type = "project",
                             description = project.Description,
-                            status = project.Status.ToString()
+                            status = project.ProjectStatus.ToString()
                         });
                     }
                 }

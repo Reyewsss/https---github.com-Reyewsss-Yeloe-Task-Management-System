@@ -25,10 +25,10 @@
     {
         @foreach (var project in Model)
         {
-            <div class="project-card" data-id="@project.Id" onclick="window.location.href='@Url.Action("Dashboard", "Projects", new { id = project.Id })'">
+            <div class="project-card" data-id="@project.ProjectId" onclick="window.location.href='@Url.Action("Dashboard", "Projects", new { id = project.ProjectId })'">
                 <div class="project-header">
-                    <h3>@project.Name</h3>
-                    <span class="project-status @project.Status.ToString().ToLower().Replace(" ", "-")">@project.Status</span>
+                    <h3>@project.ProjectName</h3>
+                    <span class="project-status @project.ProjectStatus.ToString().ToLower().Replace(" ", "-")">@project.ProjectStatus</span>
                 </div>
                 <p class="project-description">@project.Description</p>
                 <div class="project-meta">
@@ -45,8 +45,8 @@
                         }
                     </div>
                     <div class="project-actions">
-                        <button class="btn-icon edit" onclick="event.stopPropagation(); editProject('@project.Id')"><i class="fas fa-edit"></i></button>
-                        <button class="btn-icon delete" onclick="event.stopPropagation(); deleteProject('@project.Id')"><i class="fas fa-trash"></i></button>
+                        <button class="btn-icon edit" onclick="event.stopPropagation(); editProject('@project.ProjectId')"><i class="fas fa-edit"></i></button>
+                        <button class="btn-icon delete" onclick="event.stopPropagation(); deleteProject('@project.ProjectId')"><i class="fas fa-trash"></i></button>
                     </div>
                 </div>
             </div>

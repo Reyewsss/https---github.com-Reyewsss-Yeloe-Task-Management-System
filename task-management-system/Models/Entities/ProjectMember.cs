@@ -3,36 +3,35 @@ using MongoDB.Bson.Serialization.Attributes;
 
 namespace task_management_system.Models
 {
+    [BsonCollection("tbl_project_members")]
     public class ProjectMember
     {
         [BsonId]
         [BsonRepresentation(BsonType.ObjectId)]
-        public string? Id { get; set; }
+        [BsonElement("member_id")]
+        public string? MemberId { get; set; }
 
-        [BsonElement("projectId")]
+        [BsonElement("project_id")]
         [BsonRepresentation(BsonType.ObjectId)]
         public string ProjectId { get; set; } = string.Empty;
 
-        [BsonElement("userId")]
+        [BsonElement("user_id")]
         [BsonRepresentation(BsonType.ObjectId)]
         public string UserId { get; set; } = string.Empty;
 
-        [BsonElement("userEmail")]
+        [BsonElement("user_email")]
         public string UserEmail { get; set; } = string.Empty;
 
-        [BsonElement("userName")]
+        [BsonElement("user_name")]
         public string UserName { get; set; } = string.Empty;
-
-        [BsonElement("profilePicture")]
-        public string? ProfilePicture { get; set; }
 
         [BsonElement("role")]
         public ProjectRole Role { get; set; } = ProjectRole.Viewer;
 
-        [BsonElement("joinedAt")]
+        [BsonElement("joined_at")]
         public DateTime JoinedAt { get; set; } = DateTime.UtcNow;
 
-        [BsonElement("addedByUserId")]
+        [BsonElement("added_by_user_id")]
         [BsonRepresentation(BsonType.ObjectId)]
         public string AddedByUserId { get; set; } = string.Empty;
     }

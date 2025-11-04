@@ -10,12 +10,14 @@ namespace task_management_system.Controllers
         private readonly IAuthService _authService;
         private readonly INotificationService _notificationService;
         private readonly IEmailService _emailService;
+        private readonly IActivityService _activityService;
 
-        public AuthController(IAuthService authService, INotificationService notificationService, IEmailService emailService)
+        public AuthController(IAuthService authService, INotificationService notificationService, IEmailService emailService, IActivityService activityService)
         {
             _authService = authService;
             _notificationService = notificationService;
             _emailService = emailService;
+            _activityService = activityService;
         }
 
         // Login functionality
@@ -40,20 +42,26 @@ namespace task_management_system.Controllers
             }
 
             // Set user session
-            HttpContext.Session.SetString("UserId", user.Id);
+            HttpContext.Session.SetString("UserId", user.UserId);
             HttpContext.Session.SetString("UserEmail", user.Email);
             HttpContext.Session.SetString("UserName", $"{user.FirstName} {user.LastName}");
             
             // Format profile picture as data URL if it exists
-            if (!string.IsNullOrEmpty(user.ProfilePicture) && !string.IsNullOrEmpty(user.ProfilePictureContentType))
+            if (!string.IsNullOrEmpty(user.ProfilePictureUrl) && !string.IsNullOrEmpty(user.ProfilePictureContentType))
             {
-                var dataUrl = $"data:{user.ProfilePictureContentType};base64,{user.ProfilePicture}";
+                var dataUrl = $"data:{user.ProfilePictureContentType};base64,{user.ProfilePictureUrl}";
                 HttpContext.Session.SetString("UserProfilePicture", dataUrl);
             }
             else
             {
                 HttpContext.Session.SetString("UserProfilePicture", string.Empty);
             }
+            
+            // Log login activity
+            var ipAddress = HttpContext.Connection.RemoteIpAddress?.ToString();
+            var userAgent = HttpContext.Request.Headers["User-Agent"].ToString();
+            await _activityService.LogActivityAsync(user.UserId, ActivityTypes.Login, "Logged in to your account", ipAddress, userAgent);
+            
             return RedirectToAction("Index", "Dashboard");
         }
 
@@ -130,21 +138,21 @@ namespace task_management_system.Controllers
             if (user != null)
             {
                 await _notificationService.CreateNotificationAsync(
-                    user.Id,
+                    user.UserId,
                     "Welcome to Yeloe!",
                     $"Hi {user.FirstName}! Welcome to Yeloe Task Management. Your account has been successfully created and verified. Start organizing your tasks and boost your productivity!",
                     NotificationType.AccountCreated
                 );
 
                 // Set user session
-                HttpContext.Session.SetString("UserId", user.Id);
+                HttpContext.Session.SetString("UserId", user.UserId);
                 HttpContext.Session.SetString("UserEmail", user.Email);
                 HttpContext.Session.SetString("UserName", $"{user.FirstName} {user.LastName}");
                 
                 // Format profile picture as data URL if it exists
-                if (!string.IsNullOrEmpty(user.ProfilePicture) && !string.IsNullOrEmpty(user.ProfilePictureContentType))
+                if (!string.IsNullOrEmpty(user.ProfilePictureUrl) && !string.IsNullOrEmpty(user.ProfilePictureContentType))
                 {
-                    var dataUrl = $"data:{user.ProfilePictureContentType};base64,{user.ProfilePicture}";
+                    var dataUrl = $"data:{user.ProfilePictureContentType};base64,{user.ProfilePictureUrl}";
                     HttpContext.Session.SetString("UserProfilePicture", dataUrl);
                 }
                 else
@@ -201,7 +209,7 @@ namespace task_management_system.Controllers
                 if (user != null && user.IsEmailVerified)
                 {
                     await _notificationService.CreateNotificationAsync(
-                        user.Id,
+                        user.UserId,
                         "Password Reset Requested",
                         $"Hi {user.FirstName}! A password reset was requested for your account. If this wasn't you, please contact support immediately. The reset link will expire in 1 hour.",
                         NotificationType.PasswordReset
@@ -260,7 +268,7 @@ namespace task_management_system.Controllers
                 if (user != null)
                 {
                     await _notificationService.CreateNotificationAsync(
-                        user.Id,
+                        user.UserId,
                         "Password Successfully Reset",
                         $"Hi {user.FirstName}! Your password has been successfully reset. If you didn't make this change, please contact support immediately.",
                         NotificationType.PasswordReset

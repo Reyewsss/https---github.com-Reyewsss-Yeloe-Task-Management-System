@@ -69,7 +69,8 @@ namespace task_management_system.Controllers
 
             // Get all tasks for this project
             var allTasks = await _taskService.GetUserTasksAsync(userId);
-            var projectTasks = allTasks.Where(t => t.Project == project.Name).ToList();
+            // Filter by project name (ProjectId field stores project name)
+            var projectTasks = allTasks.Where(t => t.ProjectId == project.ProjectName).ToList();
 
             // Get project members
             var members = await _invitationService.GetProjectMembersAsync(id);
@@ -128,14 +129,14 @@ namespace task_management_system.Controllers
                     message = "Project created successfully!",
                     project = new
                     {
-                        id = project.Id,
-                        name = project.Name,
+                        id = project.ProjectId,
+                        name = project.ProjectName,
                         description = project.Description,
-                        status = project.Status.ToString(),
+                        status = project.ProjectStatus.ToString(),
                         priority = project.Priority.ToString(),
                         startDate = project.StartDate?.ToString("yyyy-MM-dd"),
                         dueDate = project.DueDate?.ToString("yyyy-MM-dd"),
-                        progress = project.Progress,
+                        progress = project.ProgressPercentage,
                         createdAt = project.CreatedAt.ToString("yyyy-MM-dd")
                     }
                 });
@@ -170,9 +171,9 @@ namespace task_management_system.Controllers
                     success = true,
                     projects = projects.Select(p => new
                     {
-                        id = p.Id,
-                        name = p.Name,
-                        status = p.Status.ToString()
+                        id = p.ProjectId,
+                        name = p.ProjectName,
+                        status = p.ProjectStatus.ToString()
                     }).ToList()
                 });
             }
@@ -210,14 +211,14 @@ namespace task_management_system.Controllers
                     success = true,
                     project = new
                     {
-                        id = project.Id,
-                        name = project.Name,
+                        id = project.ProjectId,
+                        name = project.ProjectName,
                         description = project.Description,
-                        status = project.Status.ToString(),
+                        status = project.ProjectStatus.ToString(),
                         priority = project.Priority.ToString(),
                         startDate = project.StartDate?.ToString("yyyy-MM-dd"),
                         dueDate = project.DueDate?.ToString("yyyy-MM-dd"),
-                        progress = project.Progress
+                        progress = project.ProgressPercentage
                     }
                 });
             }
@@ -272,14 +273,14 @@ namespace task_management_system.Controllers
                     message = "Project updated successfully!",
                     project = new
                     {
-                        id = project.Id,
-                        name = project.Name,
+                        id = project.ProjectId,
+                        name = project.ProjectName,
                         description = project.Description,
-                        status = project.Status.ToString(),
+                        status = project.ProjectStatus.ToString(),
                         priority = project.Priority.ToString(),
                         startDate = project.StartDate?.ToString("yyyy-MM-dd"),
                         dueDate = project.DueDate?.ToString("yyyy-MM-dd"),
-                        progress = project.Progress
+                        progress = project.ProgressPercentage
                     }
                 });
             }
@@ -383,7 +384,7 @@ namespace task_management_system.Controllers
                 // Send invitation
                 var invitation = await _invitationService.SendInvitationAsync(
                     projectId,
-                    project.Name,
+                    project.ProjectName,
                     userId,
                     userName,
                     email
@@ -395,9 +396,9 @@ namespace task_management_system.Controllers
                     message = "Invitation sent successfully!",
                     invitation = new
                     {
-                        id = invitation.Id,
+                        id = invitation.InvitationId,
                         email = invitation.InvitedUserEmail,
-                        status = invitation.Status.ToString()
+                        status = invitation.InvitationStatus.ToString()
                     }
                 });
             }
@@ -518,7 +519,7 @@ namespace task_management_system.Controllers
                     success = true,
                     members = members.Select(m => new
                     {
-                        id = m.Id,
+                        id = m.MemberId,
                         name = m.UserName,
                         email = m.UserEmail,
                         role = m.Role.ToString(),
@@ -607,7 +608,7 @@ namespace task_management_system.Controllers
 
                 // Get project by name
                 var projects = await _projectService.GetUserProjectsAsync(userId);
-                var project = projects.FirstOrDefault(p => p.Name.Equals(projectName, StringComparison.OrdinalIgnoreCase));
+                var project = projects.FirstOrDefault(p => p.ProjectName.Equals(projectName, StringComparison.OrdinalIgnoreCase));
 
                 if (project == null)
                 {
@@ -615,7 +616,7 @@ namespace task_management_system.Controllers
                 }
 
                 // Get project members from invitations service
-                var members = await _invitationService.GetProjectMembersAsync(project.Id!);
+                var members = await _invitationService.GetProjectMembersAsync(project.ProjectId!);
 
                 var memberList = members.Select(m => new
                 {

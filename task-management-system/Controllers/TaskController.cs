@@ -378,7 +378,7 @@ namespace task_management_system.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> Create([FromBody] CreateTaskViewModel model)
+        public async Task<IActionResult> Create([FromForm] CreateTaskViewModel model)
         {
             try
             {
@@ -753,31 +753,60 @@ namespace task_management_system.Controllers
                     return Json(new { success = false, message = "User not authenticated" });
                 }
 
-                // Get the status label
-                var statusLabel = await _context.TaskStatusLabels
-                    .Find(s => s.StatusLabelId == request.StatusLabelId)
-                    .FirstOrDefaultAsync();
-
-                if (statusLabel == null)
+                // Parse the status string to TaskStatus enum
+                if (!Enum.TryParse<task_management_system.Models.TaskStatus>(request.Status, out var taskStatus))
                 {
-                    return Json(new { success = false, message = "Status label not found" });
+                    return Json(new { success = false, message = "Invalid task status" });
                 }
 
-                // Update the task
+                // Get the task to check permissions
+                var task = await _context.Tasks
+                    .Find(t => t.TaskId == request.TaskId)
+                    .FirstOrDefaultAsync();
+
+                if (task == null)
+                {
+                    return Json(new { success = false, message = "Task not found" });
+                }
+
+                // Check if user has permission (owner or assigned member)
+                var project = await _context.Projects
+                    .Find(p => p.ProjectName == task.ProjectId)
+                    .FirstOrDefaultAsync();
+
+                bool hasPermission = false;
+                if (project != null)
+                {
+                    // Check if user is project owner
+                    if (project.UserId == userId)
+                    {
+                        hasPermission = true;
+                    }
+                    else
+                    {
+                        // Check if user is assigned to this task
+                        hasPermission = task.AssignedToUserId == userId;
+                    }
+                }
+
+                if (!hasPermission)
+                {
+                    return Json(new { success = false, message = "You don't have permission to update this task" });
+                }
+
+                // Update the task status
                 var update = Builders<AddTask>.Update
-                    .Set(t => t.StatusLabelId, statusLabel.StatusLabelId)
-                    .Set(t => t.StatusLabelName, statusLabel.LabelName)
-                    .Set(t => t.StatusLabelColor, statusLabel.LabelColor)
+                    .Set(t => t.TaskStatus, taskStatus)
                     .Set(t => t.UpdatedAt, DateTime.UtcNow);
 
                 var result = await _context.Tasks.UpdateOneAsync(
-                    t => t.TaskId == request.TaskId && t.UserId == userId,
+                    t => t.TaskId == request.TaskId,
                     update
                 );
 
                 if (result.ModifiedCount == 0)
                 {
-                    return Json(new { success = false, message = "Task not found or you don't have permission to update it" });
+                    return Json(new { success = false, message = "Failed to update task status" });
                 }
 
                 return Json(new { success = true, message = "Task status updated successfully" });
@@ -791,7 +820,7 @@ namespace task_management_system.Controllers
         public class UpdateTaskStatusRequest
         {
             public string TaskId { get; set; } = string.Empty;
-            public string StatusLabelId { get; set; } = string.Empty;
+            public string Status { get; set; } = string.Empty;
         }
 
         public class AddCommentRequest

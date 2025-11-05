@@ -344,9 +344,17 @@ function createMemberElement(member) {
     // Get current user's project ownership status from window data
     const isOwner = window.projectData.isProjectOwner === true || window.projectData.isProjectOwner === 'True';
 
+    // Determine avatar content
+    let avatarContent = '';
+    if (member.profilePicture && member.profilePicture !== '') {
+        avatarContent = `<img src="${member.profilePicture}" alt="${member.name}" class="member-avatar-img" />`;
+    } else {
+        avatarContent = '<i class="fas fa-user"></i>';
+    }
+
     memberDiv.innerHTML = `
         <div class="member-avatar">
-            <i class="fas fa-user"></i>
+            ${avatarContent}
         </div>
         <div class="member-info">
             <h4>${member.name}</h4>
@@ -356,7 +364,7 @@ function createMemberElement(member) {
         <div class="member-actions">
             <span class="member-role ${member.role.toLowerCase()}">${member.role}</span>
             ${isOwner ? `
-                <button class="btn-remove-member" title="Remove member" onclick="removeMember('${member.id}', '${member.name}')">
+                <button class="btn-remove-member" title="Remove member" onclick="removeMember('${member.userId}', '${member.name}')">
                     <i class="fas fa-times"></i>
                 </button>
             ` : ''}
@@ -394,6 +402,15 @@ function initializeKanban() {
 
         // Setup drag handlers for cards
         document.querySelectorAll('.kanban-card').forEach(card => {
+            // Check if user can interact with this card
+            const canInteract = card.getAttribute('data-can-interact') === 'true';
+            
+            if (!canInteract) {
+                // Prevent dragging for view-only cards
+                card.setAttribute('draggable', 'false');
+                return; // Skip adding drag event listeners
+            }
+            
             // Drag start
             card.addEventListener('dragstart', function(e) {
                 console.log('Drag started:', this.getAttribute('data-id'));
@@ -521,8 +538,12 @@ function initializeKanban() {
                 
                 if (success) {
                     console.log('Status updated successfully');
-                    updateTaskCounts();
                     showAlert(`Task moved to ${formatStatusName(newStatus)}`, 'success');
+                    
+                    // Reload the page to update all views (Kanban, Task List, Gantt)
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 800);
                 } else {
                     console.log('Status update failed, reverting');
                     showAlert('Failed to update task status', 'error');
@@ -557,7 +578,7 @@ function initializeKanban() {
     // Helper function to format status names
     function formatStatusName(status) {
         const statusNames = {
-            'Pending': 'Pending',
+            'Pending': 'To Do',
             'InProgress': 'In Progress',
             'Review': 'Review',
             'Completed': 'Completed'
@@ -573,24 +594,16 @@ async function updateTaskStatus(taskId, newStatus) {
     try {
         console.log('Updating task status...', { taskId, newStatus });
         
-        // Map status string to enum value
-        const statusMap = {
-            'Pending': 0,
-            'InProgress': 1,
-            'Review': 2,
-            'Completed': 3
-        };
-
-        const statusValue = statusMap[newStatus];
-        
-        if (statusValue === undefined) {
+        // Validate status
+        const validStatuses = ['Pending', 'InProgress', 'Review', 'Completed'];
+        if (!validStatuses.includes(newStatus)) {
             console.error('Invalid status:', newStatus);
             return false;
         }
 
         console.log('Sending request:', {
             taskId: taskId,
-            taskStatus: statusValue
+            status: newStatus
         });
 
         const response = await fetch(window.projectData.updateTaskStatusUrl, {
@@ -600,8 +613,7 @@ async function updateTaskStatus(taskId, newStatus) {
             },
             body: JSON.stringify({
                 taskId: taskId,
-                statusLabelId: null, // We're using TaskStatus enum, not custom labels
-                taskStatus: statusValue
+                status: newStatus
             })
         });
 

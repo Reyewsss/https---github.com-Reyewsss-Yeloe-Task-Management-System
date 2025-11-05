@@ -19,5 +19,7 @@ namespace task_management_system.Models.ViewModels
         public DateTime? DueDate { get; set; }
 
         public TaskPriority Priority { get; set; } = TaskPriority.Medium;
+
+        public IFormFile? Attachment { get; set; }
     }
 }

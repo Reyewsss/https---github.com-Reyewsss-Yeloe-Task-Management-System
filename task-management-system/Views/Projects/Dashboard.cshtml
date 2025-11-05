@@ -91,10 +91,14 @@
 
 <!-- Tab Contents -->
 <div class="tab-content active mb-4" id="kanban-tab">
+    @{
+        var userTaskIds = ViewBag.UserTaskIds as List<string> ?? new List<string>();
+        var isProjectOwner = ViewBag.IsProjectOwner == true;
+    }
     <div class="kanban-board">
         <div class="kanban-column">
             <div class="kanban-header pending">
-                <h3><i class="fas fa-clock"></i> Pending</h3>
+                <h3><i class="fas fa-clock"></i> To Do</h3>
                 <span class="task-count">@(tasks?.Count(t => t.TaskStatus == task_management_system.Models.TaskStatus.Pending) ?? 0)</span>
             </div>
             <div class="kanban-tasks" data-status="Pending">
@@ -102,14 +106,33 @@
                 {
                     @foreach (var task in tasks.Where(t => t.TaskStatus == task_management_system.Models.TaskStatus.Pending))
                     {
-                        <div class="kanban-card" data-id="@task.TaskId" data-status="Pending" draggable="true">
+                        // Only project owner can drag and drop
+                        var canInteract = isProjectOwner && !string.IsNullOrEmpty(task.TaskId);
+                        var cardClass = canInteract ? "kanban-card" : "kanban-card view-only";
+                        var draggable = canInteract ? "true" : "false";
+                        <div class="@cardClass" data-id="@task.TaskId" data-status="Pending" draggable="@draggable" data-can-interact="@canInteract.ToString().ToLower()">
                             <h4>@task.TaskTitle</h4>
                             <p>@task.Description</p>
+                            @if (!string.IsNullOrEmpty(task.AttachmentFileUrl))
+                            {
+                                <div class="kanban-attachment-indicator">
+                                    <i class="fas fa-paperclip"></i>
+                                    <span>@task.AttachmentFileName</span>
+                                </div>
+                            }
                             <div class="kanban-card-footer">
                                 <span class="priority-badge @task.Priority.ToString().ToLower()">@task.Priority</span>
                                 @if (task.DueDate.HasValue)
                                 {
                                     <span class="due-date"><i class="fas fa-calendar"></i> @task.DueDate.Value.ToString("MMM dd")</span>
+                                }
+                                @if (!canInteract)
+                                {
+                                    <span class="view-only-badge"><i class="fas fa-eye"></i> View Only</span>
+                                }
+                                @if (!string.IsNullOrEmpty(task.AssignedUserName))
+                                {
+                                    <span class="assigned-badge"><i class="fas fa-user"></i> @task.AssignedUserName</span>
                                 }
                             </div>
                         </div>
@@ -128,14 +151,37 @@
                 {
                     @foreach (var task in tasks.Where(t => t.TaskStatus == task_management_system.Models.TaskStatus.InProgress))
                     {
-                        <div class="kanban-card" data-id="@task.TaskId" data-status="InProgress" draggable="true">
+                        // Only project owner can drag and drop
+                        var canInteract = isProjectOwner && !string.IsNullOrEmpty(task.TaskId);
+                        var cardClass = canInteract ? "kanban-card" : "kanban-card view-only";
+                        var draggable = canInteract ? "true" : "false";
+                        <div class="@cardClass" data-id="@task.TaskId" data-status="InProgress" draggable="@draggable" data-can-interact="@canInteract.ToString().ToLower()">
                             <h4>@task.TaskTitle</h4>
                             <p>@task.Description</p>
+                            @if (!string.IsNullOrEmpty(task.AttachmentFileUrl))
+                            {
+                                <div class="kanban-attachment-indicator">
+                                    <i class="fas fa-paperclip"></i>
+                                    <span>@task.AttachmentFileName</span>
+                                </div>
+                            }
                             <div class="kanban-card-footer">
                                 <span class="priority-badge @task.Priority.ToString().ToLower()">@task.Priority</span>
                                 @if (task.DueDate.HasValue)
                                 {
                                     <span class="due-date"><i class="fas fa-calendar"></i> @task.DueDate.Value.ToString("MMM dd")</span>
+                                }
+                                @if (!canInteract)
+                                {
+                                    <span class="view-only-badge">
+                                        <i class="fas fa-eye"></i> View Only
+                                    </span>
+                                }
+                                @if (!string.IsNullOrEmpty(task.AssignedUserName))
+                                {
+                                    <span class="assigned-badge">
+                                        <i class="fas fa-user"></i> @task.AssignedUserName
+                                    </span>
                                 }
                             </div>
                         </div>
@@ -154,14 +200,37 @@
                 {
                     @foreach (var task in tasks.Where(t => t.TaskStatus == task_management_system.Models.TaskStatus.Review))
                     {
-                        <div class="kanban-card" data-id="@task.TaskId" data-status="Review" draggable="true">
+                        // Only project owner can drag and drop
+                        var canInteract = isProjectOwner && !string.IsNullOrEmpty(task.TaskId);
+                        var cardClass = canInteract ? "kanban-card" : "kanban-card view-only";
+                        var draggable = canInteract ? "true" : "false";
+                        <div class="@cardClass" data-id="@task.TaskId" data-status="Review" draggable="@draggable" data-can-interact="@canInteract.ToString().ToLower()">
                             <h4>@task.TaskTitle</h4>
                             <p>@task.Description</p>
+                            @if (!string.IsNullOrEmpty(task.AttachmentFileUrl))
+                            {
+                                <div class="kanban-attachment-indicator">
+                                    <i class="fas fa-paperclip"></i>
+                                    <span>@task.AttachmentFileName</span>
+                                </div>
+                            }
                             <div class="kanban-card-footer">
                                 <span class="priority-badge @task.Priority.ToString().ToLower()">@task.Priority</span>
                                 @if (task.DueDate.HasValue)
                                 {
                                     <span class="due-date"><i class="fas fa-calendar"></i> @task.DueDate.Value.ToString("MMM dd")</span>
+                                }
+                                @if (!canInteract)
+                                {
+                                    <span class="view-only-badge">
+                                        <i class="fas fa-eye"></i> View Only
+                                    </span>
+                                }
+                                @if (!string.IsNullOrEmpty(task.AssignedUserName))
+                                {
+                                    <span class="assigned-badge">
+                                        <i class="fas fa-user"></i> @task.AssignedUserName
+                                    </span>
                                 }
                             </div>
                         </div>
@@ -180,14 +249,37 @@
                 {
                     @foreach (var task in tasks.Where(t => t.TaskStatus == task_management_system.Models.TaskStatus.Completed))
                     {
-                        <div class="kanban-card completed" data-id="@task.TaskId" data-status="Completed" draggable="true">
+                        // Only project owner can drag and drop
+                        var canInteract = isProjectOwner && !string.IsNullOrEmpty(task.TaskId);
+                        var cardClass = canInteract ? "kanban-card completed" : "kanban-card completed view-only";
+                        var draggable = canInteract ? "true" : "false";
+                        <div class="@cardClass" data-id="@task.TaskId" data-status="Completed" draggable="@draggable" data-can-interact="@canInteract.ToString().ToLower()">
                             <h4>@task.TaskTitle</h4>
                             <p>@task.Description</p>
+                            @if (!string.IsNullOrEmpty(task.AttachmentFileUrl))
+                            {
+                                <div class="kanban-attachment-indicator">
+                                    <i class="fas fa-paperclip"></i>
+                                    <span>@task.AttachmentFileName</span>
+                                </div>
+                            }
                             <div class="kanban-card-footer">
                                 <span class="priority-badge @task.Priority.ToString().ToLower()">@task.Priority</span>
                                 @if (task.DueDate.HasValue)
                                 {
                                     <span class="due-date"><i class="fas fa-calendar"></i> @task.DueDate.Value.ToString("MMM dd")</span>
+                                }
+                                @if (!canInteract)
+                                {
+                                    <span class="view-only-badge">
+                                        <i class="fas fa-eye"></i> View Only
+                                    </span>
+                                }
+                                @if (!string.IsNullOrEmpty(task.AssignedUserName))
+                                {
+                                    <span class="assigned-badge">
+                                        <i class="fas fa-user"></i> @task.AssignedUserName
+                                    </span>
                                 }
                             </div>
                         </div>
@@ -215,7 +307,31 @@
                         <h4>@task.TaskTitle</h4>
                         <p>@task.Description</p>
                         <div class="task-tags">
-                            <span class="status-badge @task.TaskStatus.ToString().ToLower()">@task.TaskStatus</span>
+                            @{
+                                var statusDisplay = task.TaskStatus.ToString();
+                                var statusClass = task.TaskStatus.ToString().ToLower();
+                                
+                                switch (task.TaskStatus)
+                                {
+                                    case task_management_system.Models.TaskStatus.Pending:
+                                        statusDisplay = "To Do";
+                                        statusClass = "pending";
+                                        break;
+                                    case task_management_system.Models.TaskStatus.InProgress:
+                                        statusDisplay = "In Progress";
+                                        statusClass = "inprogress";
+                                        break;
+                                    case task_management_system.Models.TaskStatus.Review:
+                                        statusDisplay = "Review";
+                                        statusClass = "review";
+                                        break;
+                                    case task_management_system.Models.TaskStatus.Completed:
+                                        statusDisplay = "Completed";
+                                        statusClass = "completed";
+                                        break;
+                                }
+                            }
+                            <span class="status-badge @statusClass">@statusDisplay</span>
                             <span class="priority-badge @task.Priority.ToString().ToLower()">@task.Priority</span>
                             @if (task.DueDate.HasValue)
                             {
@@ -269,7 +385,10 @@
                                     </span>
                                 </div>
                                 <div class="gantt-task-timeline">
-                                    <div class="gantt-task-bar @task.TaskStatus.ToString().ToLower()" 
+                                    @{
+                                        var ganttStatusClass = task.TaskStatus == task_management_system.Models.TaskStatus.InProgress ? "inprogress" : task.TaskStatus.ToString().ToLower();
+                                    }
+                                    <div class="gantt-task-bar @ganttStatusClass" 
                                          data-start="@task.CreatedAt.ToString("yyyy-MM-dd")"
                                          data-end="@task.DueDate.Value.ToString("yyyy-MM-dd")"
                                          data-status="@task.TaskStatus.ToString()">
@@ -315,9 +434,9 @@
             <!-- Project Owner -->
             <div class="team-member owner-member">
                 <div class="member-avatar owner-avatar">
-                    @if (!string.IsNullOrEmpty(ViewBag.UserProfilePicture))
+                    @if (!string.IsNullOrEmpty(Model.CreatedByProfilePicture))
                     {
-                        <img src="@ViewBag.UserProfilePicture" alt="Profile" class="member-avatar-img" />
+                        <img src="@Model.CreatedByProfilePicture" alt="Owner" class="member-avatar-img" />
                     }
                     else
                     {
@@ -325,7 +444,7 @@
                     }
                 </div>
                 <div class="member-info">
-                    <h4>@ViewBag.UserName <span class="owner-badge"><i class="fas fa-crown"></i></span></h4>
+                    <h4>@Model.CreatedByName <span class="owner-badge"><i class="fas fa-crown"></i></span></h4>
                     <p>Project Owner</p>
                 </div>
                 <span class="member-role owner">Owner</span>

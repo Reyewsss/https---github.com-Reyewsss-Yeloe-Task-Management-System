@@ -33,6 +33,31 @@ function initializeTaskPage() {
             }
         });
     }
+
+    // Handle file input change
+    const fileInput = document.getElementById('taskAttachment');
+    const fileLabel = document.querySelector('.file-upload-label');
+    const fileNameDisplay = document.getElementById('fileNameDisplay');
+    const removeFileBtn = document.getElementById('removeFileBtn');
+    
+    if (fileInput && fileLabel && fileNameDisplay && removeFileBtn) {
+        fileInput.addEventListener('change', function() {
+            if (this.files && this.files.length > 0) {
+                const file = this.files[0];
+                const fileSize = (file.size / 1024 / 1024).toFixed(2); // Convert to MB
+                fileNameDisplay.textContent = `${file.name} (${fileSize} MB)`;
+                fileLabel.classList.add('has-file');
+                removeFileBtn.style.display = 'flex';
+            }
+        });
+
+        removeFileBtn.addEventListener('click', function() {
+            fileInput.value = '';
+            fileNameDisplay.textContent = 'Choose a file or drag it here';
+            fileLabel.classList.remove('has-file');
+            removeFileBtn.style.display = 'none';
+        });
+    }
     
     // Open modal when clicking new task button
     if (newTaskBtn) {
@@ -298,22 +323,32 @@ async function handleCreateTask() {
     // Combine date and time if available
     const combinedDateTime = window.combineDateAndTime ? window.combineDateAndTime() : (document.getElementById('taskDueDate').value || null);
     
-    const formData = {
-        title: document.getElementById('taskTitle').value.trim(),
-        description: document.getElementById('taskDescription').value.trim(),
-        project: projectValue,
-        assignedTo: document.getElementById('taskAssignedTo')?.value || null,
-        dueDate: combinedDateTime,
-        priority: priorityInt // Send as integer (0, 1, 2)
-    };
+    // Get file attachment
+    const fileInput = document.getElementById('taskAttachment');
+    const hasFile = fileInput && fileInput.files && fileInput.files.length > 0;
+    
+    // Use FormData for file upload support
+    const formData = new FormData();
+    formData.append('title', document.getElementById('taskTitle').value.trim());
+    formData.append('description', document.getElementById('taskDescription').value.trim());
+    formData.append('project', projectValue);
+    formData.append('assignedTo', document.getElementById('taskAssignedTo')?.value || '');
+    formData.append('dueDate', combinedDateTime || '');
+    formData.append('priority', priorityInt); // Send as integer (0, 1, 2)
+    
+    // Add file attachment if selected
+    if (hasFile) {
+        formData.append('attachment', fileInput.files[0]);
+    }
     
     // Add taskId if in edit mode
     if (isEditMode && taskId) {
-        formData.taskId = taskId;
+        formData.append('taskId', taskId);
     }
     
     // Basic validation
-    if (!formData.title) {
+    const titleValue = document.getElementById('taskTitle').value.trim();
+    if (!titleValue) {
         showError('titleError', 'Task title is required');
         return;
     }
@@ -326,10 +361,7 @@ async function handleCreateTask() {
         
         const response = await fetch(url, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(formData)
+            body: formData // No Content-Type header needed with FormData
         });
         
         const result = await response.json();

@@ -70,14 +70,19 @@
 }
 
 .task-status-badge.pending {
-    background: #fff3e0;
-    color: #f57c00;
+    background: #F5F5F5;
+    color: #616161;
 }
 
 .task-status-badge.in-progress,
 .task-status-badge.inprogress {
     background: #e3f2fd;
     color: #1976d2;
+}
+
+.task-status-badge.review {
+    background: #FFF9C4;
+    color: #F57F17;
 }
 
 .task-status-badge.completed {
@@ -228,14 +233,78 @@
 }
 
 .status-badge.pending {
-    background: #fff3e0;
-    color: #f57c00;
+    background: #F5F5F5;
+    color: #616161;
 }
 
 .status-badge.in-progress,
 .status-badge.inprogress {
     background: #e3f2fd;
     color: #1976d2;
+}
+
+.status-badge.review {
+    background: #FFF9C4;
+    color: #F57F17;
+}
+
+/* Task Attachment Display */
+.task-attachment-display {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem 1rem;
+    background: #f8f9fa;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+}
+
+.task-attachment-display:hover {
+    background: #fff;
+    border-color: var(--primary-light);
+    box-shadow: 0 2px 8px rgba(106, 64, 24, 0.1);
+}
+
+.task-attachment-display i.fa-paperclip {
+    color: var(--primary-light);
+    font-size: 1.1rem;
+}
+
+.task-attachment-display .attachment-link {
+    flex: 1;
+    color: var(--primary-dark);
+    text-decoration: none;
+    font-weight: 500;
+    font-size: 0.95rem;
+}
+
+.task-attachment-display .attachment-link:hover {
+    color: var(--primary-light);
+    text-decoration: underline;
+}
+
+.task-attachment-display .file-size {
+    color: #666;
+    font-size: 0.85rem;
+}
+
+.task-attachment-display .btn-download {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    background: var(--primary-light);
+    color: white;
+    border-radius: 6px;
+    text-decoration: none;
+    transition: all 0.3s ease;
+}
+
+.task-attachment-display .btn-download:hover {
+    background: var(--primary-dark);
+    transform: scale(1.05);
 }
 
 /* Comments Section */

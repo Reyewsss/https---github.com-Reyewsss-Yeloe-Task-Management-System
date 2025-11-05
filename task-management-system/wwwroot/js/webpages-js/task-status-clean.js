@@ -13,7 +13,31 @@ function isCompletedStatus(name) {
 
 // Utility function to get color for status (auto-detects completed)
 function getStatusColor(name, defaultColor = null) {
-    return isCompletedStatus(name) ? COMPLETED_COLOR : (defaultColor || getRandomColor());
+    // Check for standard status names first
+    const lowerName = name.toLowerCase();
+    
+    // To Do / Pending - Gray
+    if (lowerName.includes('to do') || lowerName.includes('pending') || lowerName === 'todo') {
+        return '#9E9E9E';
+    }
+    
+    // In Progress - Blue
+    if (lowerName.includes('in progress') || lowerName.includes('inprogress') || lowerName === 'in-progress') {
+        return '#2196F3';
+    }
+    
+    // Review - Yellow
+    if (lowerName.includes('review')) {
+        return '#FDD835';
+    }
+    
+    // Completed - Green
+    if (isCompletedStatus(name)) {
+        return COMPLETED_COLOR;
+    }
+    
+    // Use provided default color or random
+    return defaultColor || getRandomColor();
 }
 
 function getRandomColor() {
@@ -39,17 +63,50 @@ async function initializeStatusSystem() {
 
 async function loadStatusLabels() {
     try {
+        // Try to fetch custom status labels from API
         const response = await fetch(window.statusUrls.getLabelsUrl);
         if (response.ok) {
-            statusLabels = await response.json();
-            renderStatusFilters();
-            populateStatusDropdowns();
-            if (document.getElementById('statusLabelsList')) {
-                renderStatusLabelsList();
+            const customLabels = await response.json();
+            
+            // If custom labels exist, use them; otherwise use standard statuses
+            if (customLabels && customLabels.length > 0) {
+                statusLabels = customLabels;
+            } else {
+                // Fallback to standard statuses
+                statusLabels = [
+                    { statusLabelId: 'Pending', labelName: 'To Do', labelColor: '#9E9E9E' },
+                    { statusLabelId: 'InProgress', labelName: 'In Progress', labelColor: '#2196F3' },
+                    { statusLabelId: 'Review', labelName: 'Review', labelColor: '#FDD835' },
+                    { statusLabelId: 'Completed', labelName: 'Completed', labelColor: '#28a745' }
+                ];
             }
+        } else {
+            // Fallback to standard statuses if API fails
+            statusLabels = [
+                { statusLabelId: 'Pending', labelName: 'To Do', labelColor: '#9E9E9E' },
+                { statusLabelId: 'InProgress', labelName: 'In Progress', labelColor: '#2196F3' },
+                { statusLabelId: 'Review', labelName: 'Review', labelColor: '#FDD835' },
+                { statusLabelId: 'Completed', labelName: 'Completed', labelColor: '#28a745' }
+            ];
+        }
+        
+        renderStatusFilters();
+        populateStatusDropdowns();
+        
+        if (document.getElementById('statusLabelsList')) {
+            renderStatusLabelsList();
         }
     } catch (error) {
         console.error('Error loading status labels:', error);
+        // Fallback to standard statuses
+        statusLabels = [
+            { statusLabelId: 'Pending', labelName: 'To Do', labelColor: '#9E9E9E' },
+            { statusLabelId: 'InProgress', labelName: 'In Progress', labelColor: '#2196F3' },
+            { statusLabelId: 'Review', labelName: 'Review', labelColor: '#FDD835' },
+            { statusLabelId: 'Completed', labelName: 'Completed', labelColor: '#28a745' }
+        ];
+        renderStatusFilters();
+        populateStatusDropdowns();
     }
 }
 
@@ -60,7 +117,7 @@ function renderStatusFilters() {
     container.innerHTML = statusLabels.map(label => {
         const labelColor = getStatusColor(label.labelName, label.labelColor);
         return `
-        <button class="filter-btn" data-filter="${label.statusLabelId}";">
+        <button class="filter-btn" data-filter="${label.statusLabelId}">
             <span class="status-dot" style="background-color: ${labelColor};"></span>
             ${label.labelName}
         </button>
@@ -78,14 +135,23 @@ function renderStatusFilters() {
 
 function populateStatusDropdowns() {
     const dropdowns = document.querySelectorAll('.status-dropdown');
+    
+    // Define standard status options
+    const standardStatuses = [
+        { value: 'Pending', label: 'To Do', color: '#9E9E9E' },
+        { value: 'InProgress', label: 'In Progress', color: '#2196F3' },
+        { value: 'Review', label: 'Review', color: '#FDD835' },
+        { value: 'Completed', label: 'Completed', color: '#28a745' }
+    ];
+    
     dropdowns.forEach(dropdown => {
         const taskId = dropdown.dataset.taskId;
         const currentTask = document.querySelector(`[data-id="${taskId}"]`);
         const currentStatus = currentTask?.dataset.status;
 
-        dropdown.innerHTML = statusLabels.map(label => `
-                <option value="${label.statusLabelId}" ${label.statusLabelId === currentStatus ? 'selected' : ''}>
-                    ${label.labelName}
+        dropdown.innerHTML = standardStatuses.map(status => `
+                <option value="${status.value}" ${status.value === currentStatus || status.value.toLowerCase() === currentStatus ? 'selected' : ''}>
+                    ${status.label}
                 </option>
             `).join('');
     });
@@ -102,32 +168,31 @@ function filterTasksByStatus(statusId) {
     });
 }
 
-async function updateTaskStatus(taskId, statusLabelId) {
-    if (!statusLabelId) return;
+async function updateTaskStatus(taskId, status) {
+    if (!status) return;
 
     try {
+        console.log('Updating task status:', { taskId, status });
+        
         const response = await fetch(window.taskUrls.updateStatusUrl, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ taskId, statusLabelId })
+            body: JSON.stringify({ taskId, status })
         });
 
         if (response.ok) {
-            const taskItem = document.querySelector(`[data-id="${taskId}"]`);
-            if (taskItem) {
-                taskItem.dataset.status = statusLabelId;
-                const statusLabel = statusLabels.find(l => l.statusLabelId === statusLabelId);
-                if (statusLabel) {
-                    const badge = taskItem.querySelector('.task-status-badge');
-                    if (badge) {
-                        const labelColor = getStatusColor(statusLabel.labelName, statusLabel.labelColor);
-                        badge.style.backgroundColor = labelColor;
-                        badge.querySelector('.status-display').textContent = statusLabel.labelName;
-                    }
-                }
-            }
+            const result = await response.json();
+            console.log('Update result:', result);
+            
             showNotification('Status updated successfully', 'success');
+            
+            // Reload the page to update all views (Task list, Kanban, Gantt)
+            setTimeout(() => {
+                window.location.reload();
+            }, 800);
         } else {
+            const errorText = await response.text();
+            console.error('Failed to update status:', errorText);
             showNotification('Failed to update status', 'error');
         }
     } catch (error) {
@@ -534,46 +599,35 @@ async function markAllTasksComplete() {
         return;
     }
     
-    const completeStatus = statusLabels.find(l => 
-        l.labelName.toLowerCase() === 'completed' || 
-        l.labelName.toLowerCase() === 'done'
-    );
-    
-    if (!completeStatus) {
-        showNotification('No "Completed" status found', 'error');
+    // Confirm with user
+    if (!confirm(`Are you sure you want to mark all ${tasks.length} task(s) as completed?`)) {
         return;
     }
     
     let count = 0;
+    let failed = 0;
+    
     for (const task of tasks) {
         const taskId = task.dataset.id;
         try {
-            await updateTaskStatus(taskId, completeStatus.statusLabelId);
+            // Update to Completed status
+            await updateTaskStatus(taskId, 'Completed');
             count++;
         } catch (error) {
-            console.error('Failed to update task:', taskId);
+            console.error('Failed to update task:', taskId, error);
+            failed++;
         }
     }
     
-    showNotification(`Marked ${count} task(s) as complete`, 'success');
-    await loadStatusLabels();
-}
-
-async function resetToDefaultStatuses() {
-    try {
-        const response = await fetch(window.statusUrls.initializeUrl, {
-            method: 'POST'
-        });
+    if (count > 0) {
+        showNotification(`Marked ${count} task(s) as complete${failed > 0 ? `. ${failed} failed.` : ''}`, 'success');
         
-        if (response.ok) {
-            showNotification('Status labels reset to default', 'success');
-            await loadStatusLabels();
-        } else {
-            showNotification('Failed to reset status labels', 'error');
-        }
-    } catch (error) {
-        console.error('Error resetting statuses:', error);
-        showNotification('Error resetting status labels', 'error');
+        // Reload page to show updated tasks
+        setTimeout(() => {
+            window.location.reload();
+        }, 1500);
+    } else {
+        showNotification('Failed to mark tasks as complete', 'error');
     }
 }
 

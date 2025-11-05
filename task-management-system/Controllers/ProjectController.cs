@@ -1,6 +1,8 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using task_management_system.Models.ViewModels;
 using task_management_system.Services;
+using task_management_system.Data;
+using MongoDB.Driver;
 
 namespace task_management_system.Controllers
 {
@@ -10,17 +12,20 @@ namespace task_management_system.Controllers
         private readonly ITaskService _taskService;
         private readonly IUserSessionService _userSessionService;
         private readonly IProjectInvitationService _invitationService;
+        private readonly MongoDbContext _context;
 
         public ProjectsController(
             IProjectService projectService, 
             ITaskService taskService, 
             IUserSessionService userSessionService,
-            IProjectInvitationService invitationService)
+            IProjectInvitationService invitationService,
+            MongoDbContext context)
         {
             _projectService = projectService;
             _taskService = taskService;
             _userSessionService = userSessionService;
             _invitationService = invitationService;
+            _context = context;
         }
 
         // GET: Projects
@@ -67,10 +72,50 @@ namespace task_management_system.Controllers
                 return NotFound();
             }
 
-            // Get all tasks for this project
-            var allTasks = await _taskService.GetUserTasksAsync(userId);
-            // Filter by project name (ProjectId field stores project name)
-            var projectTasks = allTasks.Where(t => t.ProjectId == project.ProjectName).ToList();
+            // Get project owner details
+            var owner = await _context.Users.Find(u => u.UserId == project.UserId).FirstOrDefaultAsync();
+            if (owner != null)
+            {
+                project.CreatedByName = $"{owner.FirstName} {owner.LastName}".Trim();
+                if (string.IsNullOrEmpty(project.CreatedByName))
+                {
+                    project.CreatedByName = owner.Email;
+                }
+                
+                // Handle profile picture
+                if (!string.IsNullOrEmpty(owner.ProfilePictureUrl))
+                {
+                    if (!string.IsNullOrEmpty(owner.ProfilePictureContentType))
+                    {
+                        project.CreatedByProfilePicture = $"data:{owner.ProfilePictureContentType};base64,{owner.ProfilePictureUrl}";
+                    }
+                    else
+                    {
+                        project.CreatedByProfilePicture = owner.ProfilePictureUrl;
+                    }
+                }
+            }
+
+            // Get all tasks for this project (regardless of assignment)
+            var projectTasks = await _taskService.GetTasksByProjectNameAsync(project.ProjectName);
+            
+            // Determine which tasks the current user can interact with
+            bool isProjectOwner = project.UserId == userId;
+            var userTaskIds = new List<string>();
+            
+            if (!isProjectOwner)
+            {
+                // For members, only get tasks assigned to them
+                userTaskIds = projectTasks
+                    .Where(t => t.AssignedToUserId == userId)
+                    .Select(t => t.TaskId ?? string.Empty)
+                    .ToList();
+            }
+            else
+            {
+                // Project owner can interact with all tasks
+                userTaskIds = projectTasks.Select(t => t.TaskId ?? string.Empty).ToList();
+            }
 
             // Get project members
             var members = await _invitationService.GetProjectMembersAsync(id);
@@ -82,7 +127,8 @@ namespace task_management_system.Controllers
             ViewBag.UserName = _userSessionService.GetCurrentUserName();
             ViewBag.UserProfilePicture = _userSessionService.GetCurrentUserProfilePicture();
             ViewBag.UserId = userId;
-            ViewBag.IsProjectOwner = project.UserId == userId;
+            ViewBag.IsProjectOwner = isProjectOwner;
+            ViewBag.UserTaskIds = userTaskIds; // Tasks the current user can interact with
             ViewBag.TotalTasks = projectTasks.Count;
             ViewBag.CompletedTasks = projectTasks.Count(t => t.IsCompleted);
             ViewBag.PendingTasks = projectTasks.Count(t => !t.IsCompleted);
@@ -513,18 +559,42 @@ namespace task_management_system.Controllers
                 }
 
                 var members = await _invitationService.GetProjectMembersAsync(projectId);
+                
+                // Enrich member data with profile pictures
+                var enrichedMembers = new List<object>();
+                foreach (var member in members)
+                {
+                    var user = await _context.Users.Find(u => u.UserId == member.UserId).FirstOrDefaultAsync();
+                    string? profilePicture = null;
+                    
+                    if (user != null && !string.IsNullOrEmpty(user.ProfilePictureUrl))
+                    {
+                        if (!string.IsNullOrEmpty(user.ProfilePictureContentType))
+                        {
+                            profilePicture = $"data:{user.ProfilePictureContentType};base64,{user.ProfilePictureUrl}";
+                        }
+                        else
+                        {
+                            profilePicture = user.ProfilePictureUrl;
+                        }
+                    }
+                    
+                    enrichedMembers.Add(new
+                    {
+                        id = member.MemberId,
+                        userId = member.UserId,
+                        name = member.UserName,
+                        email = member.UserEmail,
+                        role = member.Role.ToString(),
+                        joinedAt = member.JoinedAt.ToString("MMM dd, yyyy"),
+                        profilePicture = profilePicture
+                    });
+                }
 
                 return Json(new
                 {
                     success = true,
-                    members = members.Select(m => new
-                    {
-                        id = m.MemberId,
-                        name = m.UserName,
-                        email = m.UserEmail,
-                        role = m.Role.ToString(),
-                        joinedAt = m.JoinedAt.ToString("MMM dd, yyyy")
-                    }).ToList()
+                    members = enrichedMembers
                 });
             }
             catch (Exception ex)

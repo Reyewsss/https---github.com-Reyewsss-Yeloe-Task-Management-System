@@ -59,6 +59,27 @@
                         <span class="status-badge @Model.TaskStatus.ToString().ToLower()">@Model.TaskStatus</span>
                     </div>
                 </div>
+                @if (!string.IsNullOrEmpty(Model.AttachmentFileUrl))
+                {
+                    <div class="info-row">
+                        <label>Attachment:</label>
+                        <div class="info-value">
+                            <div class="task-attachment-display">
+                                <i class="fas fa-paperclip"></i>
+                                <a href="@Model.AttachmentFileUrl" target="_blank" class="attachment-link">
+                                    @Model.AttachmentFileName
+                                </a>
+                                @if (Model.AttachmentFileSize.HasValue)
+                                {
+                                    <span class="file-size">(@((Model.AttachmentFileSize.Value / 1024.0 / 1024.0).ToString("F2")) MB)</span>
+                                }
+                                <a href="@Model.AttachmentFileUrl" download="@Model.AttachmentFileName" class="btn-download" title="Download attachment">
+                                    <i class="fas fa-download"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                }
             </div>
         </div>
 

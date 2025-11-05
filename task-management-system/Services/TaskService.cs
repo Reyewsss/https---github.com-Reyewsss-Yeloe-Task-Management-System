@@ -10,6 +10,7 @@ namespace task_management_system.Services
     {
         Task<AddTask> CreateTaskAsync(CreateTaskViewModel model, string userId);
         Task<List<AddTask>> GetUserTasksAsync(string userId);
+        Task<List<AddTask>> GetTasksByProjectNameAsync(string projectName);
         Task<AddTask?> GetTaskByIdAsync(string taskId, string userId);
         Task<bool> CompleteTaskAsync(string taskId, string userId);
         Task<bool> DeleteTaskAsync(string taskId, string userId);
@@ -57,6 +58,26 @@ namespace task_management_system.Services
                 UpdatedAt = DateTime.UtcNow
             };
 
+            // Handle file attachment
+            if (model.Attachment != null && model.Attachment.Length > 0)
+            {
+                var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads", "tasks");
+                Directory.CreateDirectory(uploadsFolder);
+
+                var uniqueFileName = $"{Guid.NewGuid()}_{model.Attachment.FileName}";
+                var filePath = Path.Combine(uploadsFolder, uniqueFileName);
+
+                using (var stream = new FileStream(filePath, FileMode.Create))
+                {
+                    await model.Attachment.CopyToAsync(stream);
+                }
+
+                task.AttachmentFileName = model.Attachment.FileName;
+                task.AttachmentFileUrl = $"/uploads/tasks/{uniqueFileName}";
+                task.AttachmentFileType = model.Attachment.ContentType;
+                task.AttachmentFileSize = model.Attachment.Length;
+            }
+
             await _context.Tasks.InsertOneAsync(task);
             return task;
         }
@@ -103,6 +124,17 @@ namespace task_management_system.Services
                 .ToList();
 
             return allTasks;
+        }
+
+        public async Task<List<AddTask>> GetTasksByProjectNameAsync(string projectName)
+        {
+            // Get all tasks for a specific project by project name
+            var tasks = await _context.Tasks
+                .Find(t => t.ProjectId == projectName)
+                .SortByDescending(t => t.CreatedAt)
+                .ToListAsync();
+
+            return tasks;
         }
 
         public async Task<AddTask?> GetTaskByIdAsync(string taskId, string userId)

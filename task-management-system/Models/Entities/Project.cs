@@ -40,6 +40,16 @@ namespace task_management_system.Models
 
         [BsonElement("updated_at")]
         public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
+
+        // Non-persisted properties for display purposes
+        [BsonIgnore]
+        public string? CreatedBy => UserId; // Alias for UserId to maintain compatibility
+
+        [BsonIgnore]
+        public string? CreatedByName { get; set; }
+
+        [BsonIgnore]
+        public string? CreatedByProfilePicture { get; set; }
     }
 
     public enum ProjectStatus

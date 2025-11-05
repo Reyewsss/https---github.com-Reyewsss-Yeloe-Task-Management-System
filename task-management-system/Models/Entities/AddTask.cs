@@ -58,6 +58,18 @@ namespace task_management_system.Models
 
         [BsonElement("updated_at")]
         public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
+
+        [BsonElement("attachment_file_name")]
+        public string? AttachmentFileName { get; set; }
+
+        [BsonElement("attachment_file_url")]
+        public string? AttachmentFileUrl { get; set; }
+
+        [BsonElement("attachment_file_type")]
+        public string? AttachmentFileType { get; set; }
+
+        [BsonElement("attachment_file_size")]
+        public long? AttachmentFileSize { get; set; }
     }
 
     public enum TaskPriority

@@ -53,6 +53,9 @@ builder.Services.AddHostedService<DeadlineNotificationBackgroundService>();
 
 var app = builder.Build();
 
+// Ensure upload directories exist
+EnsureUploadDirectories();
+
 // Configure pipeline
 if (!app.Environment.IsDevelopment())
 {
@@ -107,5 +110,24 @@ static void LoadEnvFile()
     catch (Exception ex)
     {
         Console.WriteLine($"Error loading .env file: {ex.Message}");
+    }
+}
+
+// Method to ensure upload directories exist
+static void EnsureUploadDirectories()
+{
+    var uploadsPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads");
+    var tasksPath = Path.Combine(uploadsPath, "tasks");
+    var commentsPath = Path.Combine(uploadsPath, "comments");
+
+    try
+    {
+        Directory.CreateDirectory(tasksPath);
+        Directory.CreateDirectory(commentsPath);
+        Console.WriteLine("✓ Upload directories verified");
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"Warning: Could not create upload directories: {ex.Message}");
     }
 }

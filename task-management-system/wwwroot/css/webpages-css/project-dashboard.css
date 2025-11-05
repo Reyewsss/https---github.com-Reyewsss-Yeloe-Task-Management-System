@@ -328,8 +328,8 @@
 }
 
 .kanban-header.pending {
-    background: #FFF3E0;
-    color: #E65100;
+    background: #F5F5F5;
+    color: #616161;
 }
 
 .kanban-header.in-progress {
@@ -338,8 +338,8 @@
 }
 
 .kanban-header.review {
-    background: #F3E5F5;
-    color: #6A1B9A;
+    background: #FFF9C4;
+    color: #F57F17;
 }
 
 .kanban-header.completed {
@@ -402,6 +402,73 @@
     opacity: 0.7;
 }
 
+.kanban-card.view-only {
+    opacity: 0.6;
+    cursor: not-allowed;
+    background: #f5f5f5;
+    border: 2px dashed #ccc;
+}
+
+.kanban-card.view-only:hover {
+    transform: none;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.view-only-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.25rem 0.75rem;
+    background: #e0e0e0;
+    color: #666;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.view-only-badge i {
+    font-size: 0.7rem;
+}
+
+.assigned-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.25rem 0.75rem;
+    background: #E3F2FD;
+    color: #1976D2;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.assigned-badge i {
+    font-size: 0.7rem;
+}
+
+.kanban-attachment-indicator {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem;
+    background: #f8f9fa;
+    border-radius: 6px;
+    margin-bottom: 0.75rem;
+    font-size: 0.8rem;
+    color: #666;
+}
+
+.kanban-attachment-indicator i {
+    color: var(--primary-light);
+}
+
+.kanban-attachment-indicator span {
+    flex: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
 .kanban-tasks {
     min-height: 100px;
     transition: all 0.3s ease;
@@ -429,8 +496,9 @@
 
 .kanban-card-footer {
     display: flex;
-    justify-content: space-between;
     align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
 }
 
 .priority-badge {
@@ -527,8 +595,8 @@
 }
 
 .status-badge.pending {
-    background: #FFF3E0;
-    color: #E65100;
+    background: #F5F5F5;
+    color: #616161;
 }
 
 .status-badge.inprogress {
@@ -537,8 +605,8 @@
 }
 
 .status-badge.review {
-    background: #F3E5F5;
-    color: #6A1B9A;
+    background: #FFF9C4;
+    color: #F57F17;
 }
 
 .status-badge.completed {
@@ -1270,13 +1338,18 @@
 }
 
 .gantt-task-bar.pending {
-    background: linear-gradient(135deg, #FFA726, #FF9800);
+    background: linear-gradient(135deg, #9E9E9E, #757575);
     color: white;
 }
 
 .gantt-task-bar.inprogress {
     background: linear-gradient(135deg, #42A5F5, #2196F3);
     color: white;
+}
+
+.gantt-task-bar.review {
+    background: linear-gradient(135deg, #FFEB3B, #FDD835);
+    color: #333;
 }
 
 .gantt-task-bar.completed {

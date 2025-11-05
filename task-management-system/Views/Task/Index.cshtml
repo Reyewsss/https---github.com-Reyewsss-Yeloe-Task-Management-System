@@ -15,7 +15,7 @@
     </div>
     <div class="header-right">
         <button class="btn btn-primary" id="newTaskBtn">
-            <i class="fas fa-plus"></i> Create
+            <i class="fas fa-plus"></i> New Task
         </button>
     </div>
 </div>
@@ -90,20 +90,53 @@
         {
             var isOwner = task.UserId == currentUserId;
             
-            <div class="task-item" data-status="@(task.StatusLabelId ?? task.TaskStatus.ToString().ToLower())" data-id="@task.TaskId" onclick="window.location.href='@Url.Action("Dashboard", "Task", new { id = task.TaskId })'" style="cursor: pointer;">
+            // Determine status color based on TaskStatus enum if no custom label color
+            string? statusColor = task.StatusLabelColor;
+            string statusDisplay = task.StatusLabelName ?? task.TaskStatus.ToString();
+            
+            if (string.IsNullOrEmpty(statusColor))
+            {
+                switch (task.TaskStatus)
+                {
+                    case task_management_system.Models.TaskStatus.Pending:
+                        statusColor = "#9E9E9E"; // Gray
+                        statusDisplay = "To Do";
+                        break;
+                    case task_management_system.Models.TaskStatus.InProgress:
+                        statusColor = "#2196F3"; // Blue
+                        statusDisplay = "In Progress";
+                        break;
+                    case task_management_system.Models.TaskStatus.Review:
+                        statusColor = "#FDD835"; // Yellow
+                        statusDisplay = "Review";
+                        break;
+                    case task_management_system.Models.TaskStatus.Completed:
+                        statusColor = "#28a745"; // Green
+                        statusDisplay = "Completed";
+                        break;
+                    default:
+                        statusColor = "#6c757d";
+                        break;
+                }
+            }
+            
+            // Use TaskStatus enum string value for data-status (Pending, InProgress, Review, Completed)
+            var dataStatus = task.StatusLabelId ?? task.TaskStatus.ToString();
+            
+            <div class="task-item" data-status="@dataStatus" data-id="@task.TaskId" onclick="window.location.href='@Url.Action("Dashboard", "Task", new { id = task.TaskId })'" style="cursor: pointer;">
                 @if (isOwner)
                 {
-                    <div class="task-status-badge" onclick="event.stopPropagation();" style="background-color: @(task.StatusLabelColor ?? "#6c757d");">
+                    <div class="task-status-badge" onclick="event.stopPropagation();" style="background-color: @statusColor;">
                         <select class="status-dropdown" data-task-id="@task.TaskId" onchange="updateTaskStatus('@task.TaskId', this.value)" onclick="event.stopPropagation();">
                             <!-- Options will be populated dynamically -->
                         </select>
-                        <span class="status-display">@(task.StatusLabelName ?? task.TaskStatus.ToString())</span>
+                        <span class="status-display">@statusDisplay</span>
                     </div>
                 }
                 else
                 {
-                    <div class="task-status-badge-readonly" style="background-color: @(task.StatusLabelColor ?? "#6c757d");">
-                        @(task.StatusLabelName ?? task.TaskStatus.ToString())
+                    <div class="task-status-badge-readonly" style="background-color: @statusColor;">
+                        @statusDisplay
                     </div>
                 }
                 <div class="task-content">
@@ -244,6 +277,25 @@
                         <option value="Medium" selected>Medium Priority</option>
                         <option value="High">High Priority</option>
                     </select>
+                </div>
+
+                <div class="form-group full-width">
+                    <label for="taskAttachment" class="form-label">
+                        <i class="fas fa-paperclip"></i> Attachment (Optional)
+                    </label>
+                    <div class="file-upload-wrapper">
+                        <input type="file" id="taskAttachment" name="Attachment" class="file-input" accept="*/*">
+                        <label for="taskAttachment" class="file-upload-label">
+                            <i class="fas fa-cloud-upload-alt"></i>
+                            <span id="fileNameDisplay">Choose a file or drag it here</span>
+                        </label>
+                        <button type="button" class="file-remove-btn" id="removeFileBtn" style="display: none;">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                    <small class="form-text text-muted">
+                        Maximum file size: 10MB. Supported formats: PDF, DOC, DOCX, XLS, XLSX, PNG, JPG, etc.
+                    </small>
                 </div>
             </div>
 
